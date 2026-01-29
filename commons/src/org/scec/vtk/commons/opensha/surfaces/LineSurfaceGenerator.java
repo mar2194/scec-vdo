@@ -29,7 +29,7 @@ public class LineSurfaceGenerator extends GeometryGenerator implements Parameter
 	
 	private ParameterList faultDisplayParams;
 
-	private static final String LINE_SIZE_PARAM_NAME = "Line Size";
+	public static final String LINE_SIZE_PARAM_NAME = "Line Size";
 	private DiscreteSizeParam lineSizeParam = new DiscreteSizeParam(LINE_SIZE_PARAM_NAME, 1d, 10d, 1d);
 	
 	public static final String OPACITY_PARAM_NAME = "Line Opacity";

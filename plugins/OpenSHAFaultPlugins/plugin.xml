@@ -73,4 +73,14 @@
 		<menu-item menu="Display" submenu="OpenSHA"/>
 			
 	</plugin>
+	
+	<plugin id="org.scec.vtk.plugins.opensha.geoJSON.GeoJSONPlugin"
+		name="GeoJSON File Viewer Plugin"
+		short-name="GeoJSON File Viewer"
+		version="1.0" creator="Kevin Milner"
+		plugin-class="org.scec.vtk.plugins.opensha.geoJSON.GeoJSONPlugin">
+		
+		<menu-item menu="Display" submenu="OpenSHA"/>
+			
+	</plugin>
 </plugins>

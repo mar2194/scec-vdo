@@ -154,13 +154,14 @@ public class GraticuleGUI extends JPanel implements ActionListener{
 		pointActor.Modified();
 		if(labelsOn)
 			labelActor.SetMapper(gbs.get(0).labelMapperLat);
-		else
-			labelActor.SetMapper(null);
 		labelActor.Modified();
 		
 		this.pluginActors.addActor(tempGlobeScene);
 		this.pluginActors.addActor(pointActor);
-		this.pluginActors.addActor(labelActor);
+		if (labelsOn)
+			this.pluginActors.addActor(labelActor);
+		else
+			this.pluginActors.removeActor(labelActor);
 		Info.getMainGUI().getRenderWindow().getRenderer().ResetCamera(tempGlobeScene.GetBounds());
 	}
 	

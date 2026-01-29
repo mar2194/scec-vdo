@@ -37,7 +37,6 @@ import org.opensha.sha.earthquake.ProbEqkSource;
 import org.opensha.sha.earthquake.faultSysSolution.FaultSystemRupSet;
 import org.opensha.sha.faultSurface.FaultSection;
 import org.opensha.sha.faultSurface.PointSurface;
-import org.opensha.sha.faultSurface.utils.PtSrcDistCorr;
 import org.opensha.sha.gui.beans.IMR_MultiGuiBean;
 import org.opensha.sha.gui.beans.IMT_NewGuiBean;
 import org.opensha.sha.gui.beans.Site_GuiBean;
@@ -431,8 +430,8 @@ public class UCERF3DisaggBuilder implements FaultTreeBuilder, ParameterChangeLis
 				}
 				
 				// set point-source distance correction type & mag if it's a pointSurface
-				if(rupture.getRuptureSurface() instanceof PointSurface)
-					((PointSurface)rupture.getRuptureSurface()).setDistCorrMagAndType(rupture.getMag(), PtSrcDistCorr.Type.NSHMP08);
+//				if(rupture.getRuptureSurface() instanceof PointSurface)
+//					((PointSurface)rupture.getRuptureSurface()).setDistCorrMagAndType(rupture.getMag(), PtSrcDistCorr.Type.NSHMP08);
 
 				double qkProb = rupture.getProbability();
 

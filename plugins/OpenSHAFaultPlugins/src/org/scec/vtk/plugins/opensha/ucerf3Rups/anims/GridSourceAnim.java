@@ -23,6 +23,7 @@ import org.opensha.sha.earthquake.faultSysSolution.modules.GridSourceList.Gridde
 import org.opensha.sha.earthquake.faultSysSolution.modules.GridSourceProvider;
 import org.opensha.sha.earthquake.param.BackgroundRupParam;
 import org.opensha.sha.earthquake.param.BackgroundRupType;
+import org.opensha.sha.earthquake.util.GriddedSeismicitySettings;
 import org.opensha.sha.faultSurface.PointSurface;
 import org.opensha.sha.faultSurface.RuptureSurface;
 import org.scec.vtk.commons.opensha.faults.AbstractFaultSection;
@@ -114,9 +115,11 @@ public class GridSourceAnim implements IDBasedFaultAnimation, UCERF3RupSetChange
 				sourceRupIndexes = new int[numSources];
 				gridSources = new ProbEqkSource[numSources];
 				this.totNumRups = 0;
+				GriddedSeismicitySettings gridSettings = GriddedSeismicitySettings.DEFAULT.forSupersamplingSettings(null).forPointSourceMagCutoff(5d).forSurfaceType(bgType);
 				for (int sourceIndex=0; sourceIndex<numSources; sourceIndex++) {
 					sourceRupIndexes[sourceIndex] = totNumRups;
-					gridSources[sourceIndex] = gridProv.getSource(sourceIndex, 1d, null, bgType);
+					gridProv.getSource(sourceIndex, 1d, null, gridSettings);
+					gridSources[sourceIndex] = gridProv.getSource(sourceIndex, 1d, null, gridSettings);
 					totNumRups += gridSources[sourceIndex].getNumRuptures();
 				}
 			}
@@ -277,11 +280,13 @@ public class GridSourceAnim implements IDBasedFaultAnimation, UCERF3RupSetChange
 			Location pointLoc = null;
 			if (surf instanceof PointSurface) {
 				pointLoc = ((PointSurface)surf).getLocation();
+				pointLoc = new Location(pointLoc.lat, pointLoc.lon, ((PointSurface)surf).getDepth());
 			} else {
 				pointLoc = rupture.getHypocenterLocation();
 				
 				if (geomGen == null)
 					geomGen = new LineSurfaceGenerator();
+				geomGen.getDisplayParams().setValue(LineSurfaceGenerator.LINE_SIZE_PARAM_NAME, 3d);
 				FaultSectionActorList list = geomGen.createFaultActors(surf, Color.RED, null);
 				Preconditions.checkState(list.size() == 1, "Expected a single actor");
 				surfActor = list.get(0);
@@ -318,7 +323,7 @@ public class GridSourceAnim implements IDBasedFaultAnimation, UCERF3RupSetChange
 				singleLocActor = new vtkActor();
 				singleLocActor.SetMapper(mapper);
 //				curActor.GetProperty().SetPointSize(pointSizeParam.getValue());
-				singleLocActor.GetProperty().SetPointSize(7f);
+				singleLocActor.GetProperty().SetPointSize(8f);
 				singleLocActor.GetProperty().SetColor(GeometryGenerator.getColorDoubleArray(surfActor == null ? Color.RED : Color.BLUE));
 				singleLocActor.GetProperty().SetOpacity(1d);
 				singleLocActor.Modified();
