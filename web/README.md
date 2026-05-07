@@ -32,6 +32,9 @@ http://127.0.0.1:4173
 npm run smoke
 ```
 
+The conversion scripts intentionally use `/Users/mar2194/anaconda3/bin/python`
+so local scientific Python dependencies are consistent.
+
 ## CFM 7.0 Preferred
 
 The local CFM 7 preferred dataset is pulled from the CFM Explorer 1000 m TSurf
@@ -57,6 +60,42 @@ The generated line meshes are written to
 `public-data/political-boundaries/ca_counties/counties-boundaries.json` and
 `public-data/political-boundaries/ca_places/places-boundaries.json`. The viewer
 loads counties and places as separate toggleable layers.
+
+## Terrain
+
+Combined HARP DEM grids can be converted into browser-ready terrain meshes with:
+
+```sh
+npm run convert:terrain-mesh
+```
+
+The viewer currently lazy-loads the 2 km mesh from
+`public-data/elevation-models/combined/terrain-2000m.json` when the Terrain
+checkbox is enabled.
+
+## Water Bodies
+
+Lake and river shapefiles can be converted into binary line layers with:
+
+```sh
+npm run convert:water-bodies
+```
+
+The generated assets are written under
+`public-data/water-bodies/converted/` and loaded lazily by the Lakes, Lake Fill,
+and Rivers toggles.
+
+## Roads
+
+The California State Highway Network shapefile can be converted into a binary
+line layer with:
+
+```sh
+npm run convert:roads
+```
+
+The generated assets are written under `public-data/roads/converted/` and
+loaded lazily by the Highways toggle in the Roads group.
 
 ## Notes
 

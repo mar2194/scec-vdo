@@ -17,32 +17,99 @@
           <button id="reset-camera" class="icon-button" type="button" title="Reset camera" aria-label="Reset camera">R</button>
         </header>
 
-        <label class="search-field">
-          <span>Search</span>
-          <input id="fault-search" type="search" autocomplete="off" placeholder="fault name or code" />
-        </label>
-
         <div class="control-row">
+          <label class="toggle-row">
+            <input id="show-terrain" type="checkbox" />
+            <span>Terrain</span>
+          </label>
           <label class="toggle-row">
             <input id="show-grid" type="checkbox" checked />
             <span>Grid</span>
           </label>
+        </div>
+
+        <div class="control-row single">
           <label class="toggle-row">
             <input id="show-grid-labels" type="checkbox" />
             <span>Labels</span>
           </label>
         </div>
 
-        <div class="control-row">
-          <label class="toggle-row">
-            <input id="show-political-boundaries" type="checkbox" />
-            <span>Counties</span>
-          </label>
-          <label class="toggle-row">
-            <input id="show-place-boundaries" type="checkbox" />
-            <span>Places</span>
-          </label>
-        </div>
+        <section class="layer-group" aria-label="Boundary layers">
+          <div class="layer-group-title">Boundaries</div>
+          <div class="boundary-grid water-grid">
+            <label class="toggle-row">
+              <input id="show-political-boundaries" type="checkbox" />
+              <span>Counties</span>
+            </label>
+            <label class="color-row">
+              <span>Color</span>
+              <input id="county-color" type="color" value="#edde94" />
+            </label>
+            <label class="toggle-row">
+              <input id="show-county-labels" type="checkbox" />
+              <span>Labels</span>
+            </label>
+          </div>
+
+          <div class="boundary-grid water-grid">
+            <label class="toggle-row">
+              <input id="show-place-boundaries" type="checkbox" />
+              <span>Places</span>
+            </label>
+            <label class="color-row">
+              <span>Color</span>
+              <input id="place-color" type="color" value="#75c2f5" />
+            </label>
+            <label class="toggle-row">
+              <input id="show-place-labels" type="checkbox" />
+              <span>Labels</span>
+            </label>
+          </div>
+        </section>
+
+        <section class="layer-group" aria-label="Water layers">
+          <div class="layer-group-title">Water</div>
+          <div class="boundary-grid lake-grid">
+            <label class="toggle-row">
+              <input id="show-lakes" type="checkbox" />
+              <span>Lakes</span>
+            </label>
+            <label class="toggle-row">
+              <input id="show-lake-fill" type="checkbox" />
+              <span>Fill</span>
+            </label>
+            <label class="color-row">
+              <span>Color</span>
+              <input id="lake-color" type="color" value="#2f9bd3" />
+            </label>
+          </div>
+
+          <div class="boundary-grid">
+            <label class="toggle-row">
+              <input id="show-rivers" type="checkbox" />
+              <span>Rivers</span>
+            </label>
+            <label class="color-row">
+              <span>Color</span>
+              <input id="river-color" type="color" value="#5bbff7" />
+            </label>
+          </div>
+        </section>
+
+        <section class="layer-group" aria-label="Road layers">
+          <div class="layer-group-title">Roads</div>
+          <div class="boundary-grid water-grid">
+            <label class="toggle-row">
+              <input id="show-roads" type="checkbox" />
+              <span>Highways</span>
+            </label>
+            <label class="color-row">
+              <span>Color</span>
+              <input id="road-color" type="color" value="#f3d16b" />
+            </label>
+          </div>
+        </section>
 
         <div class="control-row">
           <label class="toggle-row">
@@ -53,6 +120,15 @@
             <input id="show-alt" type="checkbox" checked />
             <span>Alt</span>
           </label>
+        </div>
+
+        <label class="search-field">
+          <span>Search</span>
+          <input id="fault-search" type="search" autocomplete="off" placeholder="fault name or code" />
+        </label>
+        <div class="search-actions">
+          <button id="show-matching-faults" class="tool-button" type="button">Show matches</button>
+          <button id="hide-matching-faults" class="tool-button" type="button">Hide matches</button>
         </div>
 
         <section class="fault-list-section" aria-labelledby="fault-list-heading">
@@ -67,6 +143,8 @@
       <main class="viewer-region">
         <canvas id="viewer-canvas" aria-label="3D fault scene"></canvas>
         <div id="grid-labels" class="grid-labels" aria-hidden="true"></div>
+        <div id="county-labels" class="county-labels" aria-hidden="true"></div>
+        <div id="place-labels" class="place-labels" aria-hidden="true"></div>
         <div id="fault-labels" class="fault-labels" aria-hidden="true"></div>
         <div id="focus-marker" class="focus-marker" aria-hidden="true"></div>
         <button id="compass" class="compass" type="button" title="Reset to north-up view" aria-label="Reset to north-up view">
@@ -90,6 +168,14 @@
             <label class="range-control">
               <span>Opacity</span>
               <input id="opacity" type="range" min="20" max="100" value="88" />
+            </label>
+            <label class="range-control">
+              <span>Relief</span>
+              <input id="terrain-exaggeration" type="range" min="1" max="25" value="12" />
+            </label>
+            <label class="range-control">
+              <span>DEM</span>
+              <input id="terrain-opacity" type="range" min="10" max="100" value="100" />
             </label>
           </div>
         </div>

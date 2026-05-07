@@ -2,19 +2,37 @@ const canvas = document.querySelector("#viewer-canvas");
 const faultList = document.querySelector("#fault-list");
 const faultCount = document.querySelector("#fault-count");
 const searchInput = document.querySelector("#fault-search");
+const showMatchingFaultsButton = document.querySelector("#show-matching-faults");
+const hideMatchingFaultsButton = document.querySelector("#hide-matching-faults");
+const showTerrainInput = document.querySelector("#show-terrain");
 const showGridInput = document.querySelector("#show-grid");
 const showGridLabelsInput = document.querySelector("#show-grid-labels");
 const showPoliticalBoundariesInput = document.querySelector("#show-political-boundaries");
 const showPlaceBoundariesInput = document.querySelector("#show-place-boundaries");
+const countyColorInput = document.querySelector("#county-color");
+const showCountyLabelsInput = document.querySelector("#show-county-labels");
+const placeColorInput = document.querySelector("#place-color");
+const showPlaceLabelsInput = document.querySelector("#show-place-labels");
+const showLakesInput = document.querySelector("#show-lakes");
+const showLakeFillInput = document.querySelector("#show-lake-fill");
+const lakeColorInput = document.querySelector("#lake-color");
+const showRiversInput = document.querySelector("#show-rivers");
+const riverColorInput = document.querySelector("#river-color");
+const showRoadsInput = document.querySelector("#show-roads");
+const roadColorInput = document.querySelector("#road-color");
 const showAllFaultsInput = document.querySelector("#show-all-faults");
 const showAltInput = document.querySelector("#show-alt");
 const opacityInput = document.querySelector("#opacity");
+const terrainExaggerationInput = document.querySelector("#terrain-exaggeration");
+const terrainOpacityInput = document.querySelector("#terrain-opacity");
 const statusBanner = document.querySelector("#status-banner");
 const sceneStats = document.querySelector("#scene-stats");
 const selectedName = document.querySelector("#selected-name");
 const faultDetails = document.querySelector("#fault-details");
 const gridLabelsLayer = document.querySelector("#grid-labels");
 const faultLabelsLayer = document.querySelector("#fault-labels");
+const countyLabelsLayer = document.querySelector("#county-labels");
+const placeLabelsLayer = document.querySelector("#place-labels");
 const focusMarker = document.querySelector("#focus-marker");
 const compassButton = document.querySelector("#compass");
 const compassRose = document.querySelector("#compass-rose");
@@ -31,16 +49,37 @@ const state = {
   visibleIds: new Set(),
   selectedId: undefined,
   query: "",
+  showTerrain: false,
   showGrid: true,
   showGridLabels: false,
   showPoliticalBoundaries: false,
   showPlaceBoundaries: false,
+  showLakes: false,
+  showLakeFill: false,
+  showRivers: false,
+  showRoads: false,
+  showCountyLabels: false,
+  showPlaceLabels: false,
   showAlt: true,
   opacity: 0.88,
+  terrainExaggeration: 12,
+  terrainOpacity: 1,
+  countyColor: "#edde94",
+  placeColor: "#75c2f5",
+  lakeColor: "#2f9bd3",
+  riverColor: "#5bbff7",
+  roadColor: "#f3d16b",
   renderMode: "surface",
   grid: undefined,
+  terrain: undefined,
   politicalBoundaries: undefined,
   placeBoundaries: undefined,
+  lakes: undefined,
+  lakeFill: undefined,
+  rivers: undefined,
+  roads: undefined,
+  countyLabels: [],
+  placeLabels: [],
   scene: {
     center: [0, 0, 0],
     radius: 1,
@@ -185,6 +224,80 @@ function createProgram(gl, vertexSource, fragmentSource) {
   };
 }
 
+function createTerrainProgram(gl) {
+  const vertexSource = `#version 300 es
+    in vec3 aPosition;
+    in vec3 aNormal;
+    in float aElevation;
+    uniform mat4 uProjection;
+    uniform mat4 uView;
+    uniform vec3 uSceneCenter;
+    uniform float uScale;
+    uniform float uTerrainExaggeration;
+    out vec3 vNormal;
+    out float vElevation;
+
+    void main() {
+      vec3 radialUp = normalize(aPosition);
+      float extraHeightKm = (uTerrainExaggeration - 1.0) * aElevation / 1000.0;
+      vec3 displacedPosition = aPosition + radialUp * extraHeightKm;
+      vec3 tangentNormal = aNormal - radialUp * dot(aNormal, radialUp);
+      vec3 exaggeratedNormal = normalize(radialUp * max(dot(aNormal, radialUp), 0.2) + tangentNormal * uTerrainExaggeration);
+      vec3 localPosition = (displacedPosition - uSceneCenter) * uScale;
+      vNormal = exaggeratedNormal;
+      vElevation = aElevation;
+      gl_Position = uProjection * uView * vec4(localPosition, 1.0);
+    }
+  `;
+
+  const fragmentSource = `#version 300 es
+    precision highp float;
+    in vec3 vNormal;
+    in float vElevation;
+    uniform vec3 uLightDirection;
+    uniform float uMinElevation;
+    uniform float uMaxElevation;
+    uniform float uTerrainOpacity;
+    out vec4 outColor;
+
+    vec3 ramp(float elevation) {
+      if (elevation < 0.0) {
+        return mix(vec3(0.10, 0.23, 0.32), vec3(0.18, 0.38, 0.48), clamp((elevation + 100.0) / 100.0, 0.0, 1.0));
+      }
+      if (elevation < 350.0) {
+        return mix(vec3(0.23, 0.40, 0.29), vec3(0.54, 0.58, 0.35), elevation / 350.0);
+      }
+      if (elevation < 1600.0) {
+        return mix(vec3(0.54, 0.58, 0.35), vec3(0.50, 0.38, 0.26), (elevation - 350.0) / 1250.0);
+      }
+      if (elevation < 3000.0) {
+        return mix(vec3(0.50, 0.38, 0.26), vec3(0.70, 0.68, 0.58), (elevation - 1600.0) / 1400.0);
+      }
+      return mix(vec3(0.70, 0.68, 0.58), vec3(0.94, 0.93, 0.88), clamp((elevation - 3000.0) / 1400.0, 0.0, 1.0));
+    }
+
+    void main() {
+      vec3 normal = normalize(vNormal);
+      float light = max(dot(normal, normalize(uLightDirection)), 0.0);
+      float shade = 0.42 + 0.58 * light;
+      float relative = clamp((vElevation - uMinElevation) / max(uMaxElevation - uMinElevation, 1.0), 0.0, 1.0);
+      vec3 color = ramp(vElevation) * shade;
+      color += vec3(0.05, 0.055, 0.06) * pow(relative, 1.8);
+      outColor = vec4(color, uTerrainOpacity);
+    }
+  `;
+
+  const program = createProgram(gl, vertexSource, fragmentSource);
+  program.attributes.normal = gl.getAttribLocation(program.program, "aNormal");
+  program.attributes.elevation = gl.getAttribLocation(program.program, "aElevation");
+  program.uniforms.lightDirection = gl.getUniformLocation(program.program, "uLightDirection");
+  program.uniforms.minElevation = gl.getUniformLocation(program.program, "uMinElevation");
+  program.uniforms.maxElevation = gl.getUniformLocation(program.program, "uMaxElevation");
+  program.uniforms.terrainExaggeration = gl.getUniformLocation(program.program, "uTerrainExaggeration");
+  program.uniforms.terrainOpacity = gl.getUniformLocation(program.program, "uTerrainOpacity");
+  return program;
+}
+
 function createPrograms(gl) {
   const vertexSource = `#version 300 es
     in vec3 aPosition;
@@ -211,7 +324,8 @@ function createPrograms(gl) {
 
   return {
     mesh: createProgram(gl, vertexSource, fragmentSource),
-    line: createProgram(gl, vertexSource, fragmentSource)
+    line: createProgram(gl, vertexSource, fragmentSource),
+    terrain: createTerrainProgram(gl)
   };
 }
 
@@ -220,6 +334,27 @@ function createBuffer(gl, target, data) {
   gl.bindBuffer(target, buffer);
   gl.bufferData(target, data, gl.STATIC_DRAW);
   return buffer;
+}
+
+function publicDataUrl(path) {
+  const normalized = path.replace(/^web\/public-data\//, "").replace(/^public-data\//, "");
+  return `/public-data/${normalized}`;
+}
+
+async function fetchJson(path) {
+  const response = await fetch(path);
+  if (!response.ok) {
+    throw new Error(`Unable to load ${path}`);
+  }
+  return response.json();
+}
+
+async function fetchArrayBuffer(path) {
+  const response = await fetch(path);
+  if (!response.ok) {
+    throw new Error(`Unable to load ${path}`);
+  }
+  return response.arrayBuffer();
 }
 
 function createFaultRenderData(mesh) {
@@ -317,7 +452,68 @@ async function loadFaults(ids) {
   }
 }
 
-async function loadBoundaryLayer(stateKey, path, label) {
+async function loadTerrain() {
+  if (state.terrain) {
+    return state.terrain;
+  }
+
+  showStatus("Loading terrain", true);
+  const metadataPath = "/public-data/elevation-models/combined/terrain-2000m.json";
+  const metadata = await fetchJson(metadataPath);
+  const [positionBuffer, normalBuffer, elevationBuffer, triangleBuffer] = await Promise.all([
+    fetchArrayBuffer(publicDataUrl(metadata.positionPath)),
+    fetchArrayBuffer(publicDataUrl(metadata.normalPath)),
+    fetchArrayBuffer(publicDataUrl(metadata.elevationPath)),
+    fetchArrayBuffer(publicDataUrl(metadata.trianglePath))
+  ]);
+
+  const gl = state.gl;
+  const terrain = {
+    ...metadata,
+    vertexBuffer: createBuffer(gl, gl.ARRAY_BUFFER, new Float32Array(positionBuffer)),
+    normalBuffer: createBuffer(gl, gl.ARRAY_BUFFER, new Float32Array(normalBuffer)),
+    elevationBuffer: createBuffer(gl, gl.ARRAY_BUFFER, new Float32Array(elevationBuffer)),
+    triangleBuffer: createBuffer(gl, gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(triangleBuffer)),
+    triangleIndexCount: metadata.triangleCount * 3,
+    minElevationMeters: metadata.bounds.elevationMeters[0],
+    maxElevationMeters: metadata.bounds.elevationMeters[1]
+  };
+  state.terrain = terrain;
+  showStatus("Terrain loaded");
+  return terrain;
+}
+
+async function createLineLayerRenderData(payload) {
+  let vertices;
+  if (Array.isArray(payload.lineVertices)) {
+    vertices = new Float32Array(payload.lineVertices);
+  } else if (payload.linePath) {
+    vertices = new Float32Array(await fetchArrayBuffer(publicDataUrl(payload.linePath)));
+  } else {
+    throw new Error(`${payload.name || "Line layer"} is missing line geometry`);
+  }
+
+  return {
+    ...payload,
+    vertexBuffer: createBuffer(state.gl, state.gl.ARRAY_BUFFER, vertices),
+    vertexCount: vertices.length / 3
+  };
+}
+
+async function createFillLayerRenderData(payload) {
+  const [positionBuffer, triangleBuffer] = await Promise.all([
+    fetchArrayBuffer(publicDataUrl(payload.positionPath)),
+    fetchArrayBuffer(publicDataUrl(payload.trianglePath))
+  ]);
+  return {
+    ...payload,
+    vertexBuffer: createBuffer(state.gl, state.gl.ARRAY_BUFFER, new Float32Array(positionBuffer)),
+    triangleBuffer: createBuffer(state.gl, state.gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(triangleBuffer)),
+    triangleIndexCount: payload.triangleCount * 3
+  };
+}
+
+async function loadLineLayer(stateKey, path, label, missingHint = "") {
   if (state[stateKey]) {
     return state[stateKey];
   }
@@ -325,33 +521,87 @@ async function loadBoundaryLayer(stateKey, path, label) {
   showStatus(`Loading ${label}`, true);
   const response = await fetch(path);
   if (!response.ok) {
-    throw new Error(`${label} mesh not found. Run npm run convert:political-boundaries from web/.`);
+    throw new Error(`${label} mesh not found.${missingHint ? ` ${missingHint}` : ""}`);
   }
-  const payload = await response.json();
-  const vertices = new Float32Array(payload.lineVertices);
-  const renderData = {
-    ...payload,
-    vertexBuffer: createBuffer(state.gl, state.gl.ARRAY_BUFFER, vertices),
-    vertexCount: vertices.length / 3
-  };
+  const renderData = await createLineLayerRenderData(await response.json());
   state[stateKey] = renderData;
   showStatus(`${label} loaded`);
   return renderData;
 }
 
+async function loadFillLayer(stateKey, path, label, missingHint = "") {
+  if (state[stateKey]) {
+    return state[stateKey];
+  }
+
+  showStatus(`Loading ${label}`, true);
+  const response = await fetch(path);
+  if (!response.ok) {
+    throw new Error(`${label} mesh not found.${missingHint ? ` ${missingHint}` : ""}`);
+  }
+  const renderData = await createFillLayerRenderData(await response.json());
+  state[stateKey] = renderData;
+  showStatus(`${label} loaded`);
+  return renderData;
+}
+
+async function loadBoundaryLayer(stateKey, path, label) {
+  return loadLineLayer(stateKey, path, label, "Run npm run convert:political-boundaries from web/.");
+}
+
 async function loadPoliticalBoundaries() {
-  return loadBoundaryLayer(
+  const layer = await loadBoundaryLayer(
     "politicalBoundaries",
     "/public-data/political-boundaries/ca_counties/counties-boundaries.json",
     "county boundaries"
   );
+  createCountyLabels(layer);
+  return layer;
 }
 
 async function loadPlaceBoundaries() {
-  return loadBoundaryLayer(
+  const layer = await loadBoundaryLayer(
     "placeBoundaries",
     "/public-data/political-boundaries/ca_places/places-boundaries.json",
     "place boundaries"
+  );
+  createPlaceLabels(layer);
+  return layer;
+}
+
+async function loadLakes() {
+  return loadLineLayer(
+    "lakes",
+    "/public-data/water-bodies/converted/california-lakes.json",
+    "lakes",
+    "Run npm run convert:water-bodies from web/."
+  );
+}
+
+async function loadLakeFill() {
+  return loadFillLayer(
+    "lakeFill",
+    "/public-data/water-bodies/converted/california-lakes-fill.json",
+    "lake fill",
+    "Run npm run convert:water-bodies from web/."
+  );
+}
+
+async function loadRivers() {
+  return loadLineLayer(
+    "rivers",
+    "/public-data/water-bodies/converted/nhd-major-rivers.json",
+    "rivers",
+    "Run npm run convert:water-bodies from web/."
+  );
+}
+
+async function loadRoads() {
+  return loadLineLayer(
+    "roads",
+    "/public-data/roads/converted/shn-lines.json",
+    "roads",
+    "Run npm run convert:roads from web/."
   );
 }
 
@@ -404,6 +654,43 @@ function createGridFromManifest() {
     vertexCount: vertices.length / 3,
     labels
   };
+}
+
+function createCountyLabels(layer) {
+  if (state.countyLabels.length > 0) {
+    return;
+  }
+
+  state.countyLabels = createBoundaryLabels(layer, countyLabelsLayer, "county-label", 0.7);
+}
+
+function createPlaceLabels(layer) {
+  if (state.placeLabels.length > 0) {
+    return;
+  }
+
+  state.placeLabels = createBoundaryLabels(layer, placeLabelsLayer, "place-label", 0.85);
+}
+
+function createBoundaryLabels(layer, labelsLayer, className, heightOffsetKm) {
+  const labelHeightKm = (layer.heightKm || 6.1) + heightOffsetKm;
+  const labels = (layer.features || [])
+    .filter((feature) => feature.bounds?.lat?.length === 2 && feature.bounds?.lon?.length === 2)
+    .map((feature) => {
+      const lat = (feature.bounds.lat[0] + feature.bounds.lat[1]) / 2;
+      const lon = (feature.bounds.lon[0] + feature.bounds.lon[1]) / 2;
+      const element = document.createElement("span");
+      element.className = className;
+      element.textContent = feature.name;
+      return {
+        name: feature.name,
+        position: latLonHeightToXyz(lat, lon, labelHeightKm),
+        element
+      };
+    });
+
+  labelsLayer.replaceChildren(...labels.map((label) => label.element));
+  return labels;
 }
 
 function createGridLabel(text, position) {
@@ -580,6 +867,49 @@ async function setAllFaultsVisible(visible, options = {}) {
   renderDetails();
   updateStats();
   showStatus("All faults visible");
+}
+
+async function setMatchingFaultsVisible(visible) {
+  const query = state.query.trim();
+  if (!query) {
+    showStatus("Enter a search term first");
+    searchInput.focus();
+    return;
+  }
+
+  const metas = visibleMetas();
+  if (metas.length === 0) {
+    showStatus("No matching faults");
+    return;
+  }
+
+  const ids = metas.map((fault) => fault.id);
+  if (!visible) {
+    ids.forEach((id) => state.visibleIds.delete(id));
+    if (ids.includes(state.selectedId)) {
+      state.selectedId = undefined;
+    }
+    fitSceneToVisible(false);
+    renderFaultList();
+    renderDetails();
+    updateStats();
+    showStatus(`${ids.length.toLocaleString()} matching faults hidden`);
+    return;
+  }
+
+  ids.forEach((id) => state.visibleIds.add(id));
+  if (ids.length === 1) {
+    state.selectedId = ids[0];
+  }
+  renderFaultList();
+  renderDetails();
+  updateStats();
+  await loadFaults(ids);
+  fitSceneToVisible(false);
+  renderFaultList();
+  renderDetails();
+  updateStats();
+  showStatus(`${ids.length.toLocaleString()} matching faults visible`);
 }
 
 function syncAllFaultsInput() {
@@ -848,6 +1178,16 @@ function drawScene() {
   state.lastViewProjection = multiplyMatrices(projection, view);
   updateOverlays();
 
+  if (state.showTerrain && state.terrain) {
+    gl.depthMask(true);
+    if (state.terrainOpacity >= 0.999) {
+      gl.disable(gl.BLEND);
+    }
+    drawTerrain(state.terrain);
+    gl.enable(gl.BLEND);
+    gl.clear(gl.DEPTH_BUFFER_BIT);
+  }
+
   if (state.showGrid && state.grid) {
     gl.depthMask(true);
     drawArrays(state.programs.line, state.grid.vertexBuffer, state.grid.vertexCount, [0.61, 0.62, 0.55, 0.36]);
@@ -888,15 +1228,31 @@ function drawScene() {
 
   if (
     (state.showPoliticalBoundaries && state.politicalBoundaries) ||
-    (state.showPlaceBoundaries && state.placeBoundaries)
+    (state.showPlaceBoundaries && state.placeBoundaries) ||
+    (state.showLakeFill && state.lakeFill) ||
+    (state.showLakes && state.lakes) ||
+    (state.showRivers && state.rivers) ||
+    (state.showRoads && state.roads)
   ) {
     gl.disable(gl.DEPTH_TEST);
     gl.depthMask(false);
+    if (state.showLakeFill && state.lakeFill) {
+      drawFillLayer(state.lakeFill, [...hexToRgb(state.lakeColor), 0.46]);
+    }
+    if (state.showLakes && state.lakes) {
+      drawBoundaryLayer(state.lakes, [...hexToRgb(state.lakeColor), 0.82]);
+    }
+    if (state.showRivers && state.rivers) {
+      drawBoundaryLayer(state.rivers, [...hexToRgb(state.riverColor), 0.88]);
+    }
+    if (state.showRoads && state.roads) {
+      drawBoundaryLayer(state.roads, [...hexToRgb(state.roadColor), 0.86]);
+    }
     if (state.showPoliticalBoundaries && state.politicalBoundaries) {
-      drawBoundaryLayer(state.politicalBoundaries, [0.93, 0.86, 0.58, 0.72]);
+      drawBoundaryLayer(state.politicalBoundaries, [...hexToRgb(state.countyColor), 0.76]);
     }
     if (state.showPlaceBoundaries && state.placeBoundaries) {
-      drawBoundaryLayer(state.placeBoundaries, [0.46, 0.76, 0.95, 0.62]);
+      drawBoundaryLayer(state.placeBoundaries, [...hexToRgb(state.placeColor), 0.64]);
     }
     gl.enable(gl.DEPTH_TEST);
   }
@@ -907,6 +1263,47 @@ function drawScene() {
 
 function drawBoundaryLayer(boundaryLayer, color) {
   drawArrays(state.programs.line, boundaryLayer.vertexBuffer, boundaryLayer.vertexCount, color);
+}
+
+function drawFillLayer(fillLayer, color) {
+  drawElements(
+    state.programs.mesh,
+    fillLayer.vertexBuffer,
+    fillLayer.triangleBuffer,
+    fillLayer.triangleIndexCount,
+    color,
+    state.gl.TRIANGLES
+  );
+}
+
+function drawTerrain(terrain) {
+  const gl = state.gl;
+  const programInfo = state.programs.terrain;
+  gl.useProgram(programInfo.program);
+  gl.uniformMatrix4fv(programInfo.uniforms.projection, false, currentProjectionMatrix());
+  gl.uniformMatrix4fv(programInfo.uniforms.view, false, cameraViewMatrix());
+  gl.uniform3fv(programInfo.uniforms.sceneCenter, new Float32Array(state.scene.center));
+  gl.uniform1f(programInfo.uniforms.scale, state.scene.scale);
+  gl.uniform3fv(programInfo.uniforms.lightDirection, new Float32Array(normalize([-0.45, 0.26, 0.85])));
+  gl.uniform1f(programInfo.uniforms.minElevation, terrain.minElevationMeters);
+  gl.uniform1f(programInfo.uniforms.maxElevation, terrain.maxElevationMeters);
+  gl.uniform1f(programInfo.uniforms.terrainExaggeration, state.terrainExaggeration);
+  gl.uniform1f(programInfo.uniforms.terrainOpacity, state.terrainOpacity);
+
+  gl.bindBuffer(gl.ARRAY_BUFFER, terrain.vertexBuffer);
+  gl.enableVertexAttribArray(programInfo.attributes.position);
+  gl.vertexAttribPointer(programInfo.attributes.position, 3, gl.FLOAT, false, 0, 0);
+
+  gl.bindBuffer(gl.ARRAY_BUFFER, terrain.normalBuffer);
+  gl.enableVertexAttribArray(programInfo.attributes.normal);
+  gl.vertexAttribPointer(programInfo.attributes.normal, 3, gl.FLOAT, false, 0, 0);
+
+  gl.bindBuffer(gl.ARRAY_BUFFER, terrain.elevationBuffer);
+  gl.enableVertexAttribArray(programInfo.attributes.elevation);
+  gl.vertexAttribPointer(programInfo.attributes.elevation, 1, gl.FLOAT, false, 0, 0);
+
+  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, terrain.triangleBuffer);
+  gl.drawElements(gl.TRIANGLES, terrain.triangleIndexCount, gl.UNSIGNED_INT, 0);
 }
 
 function drawArrays(programInfo, vertexBuffer, vertexCount, color) {
@@ -1081,6 +1478,8 @@ function updateOverlays() {
   updateFocusMarker();
   updateCompass();
   updateGridLabels();
+  updateCountyLabels();
+  updatePlaceLabels();
   updateFaultLabels();
 }
 
@@ -1187,6 +1586,48 @@ function updateFaultLabels() {
   }
 }
 
+function updateCountyLabels() {
+  updateBoundaryLabels(
+    countyLabelsLayer,
+    state.countyLabels,
+    state.showPoliticalBoundaries && state.showCountyLabels,
+    state.countyColor
+  );
+}
+
+function updatePlaceLabels() {
+  updateBoundaryLabels(
+    placeLabelsLayer,
+    state.placeLabels,
+    state.showPlaceBoundaries && state.showPlaceLabels,
+    state.placeColor
+  );
+}
+
+function updateBoundaryLabels(labelsLayer, labels, visible, color) {
+  labelsLayer.style.display = visible && labels.length > 0 ? "block" : "none";
+  if (!visible || labels.length === 0) {
+    return;
+  }
+
+  for (const label of labels) {
+    const screen = projectPoint(label.position);
+    if (!screen || !withinCanvas(screen, 80)) {
+      label.element.style.display = "none";
+      continue;
+    }
+
+    const bottomInset = bottomBar?.offsetHeight || 0;
+    const labelX = Math.max(64, Math.min(canvas.clientWidth - 64, screen[0]));
+    const labelY = Math.max(30, Math.min(canvas.clientHeight - bottomInset - 30, screen[1]));
+    label.element.style.color = color;
+    label.element.style.borderColor = color;
+    label.element.style.display = "block";
+    label.element.style.left = `${labelX}px`;
+    label.element.style.top = `${labelY}px`;
+  }
+}
+
 function withinCanvas(point, margin = 0) {
   return (
     point[0] >= -margin &&
@@ -1263,6 +1704,29 @@ function bindEvents() {
     renderFaultList();
   });
 
+  showMatchingFaultsButton.addEventListener("click", async () => {
+    await setMatchingFaultsVisible(true);
+  });
+
+  hideMatchingFaultsButton.addEventListener("click", async () => {
+    await setMatchingFaultsVisible(false);
+  });
+
+  showTerrainInput.addEventListener("change", async () => {
+    state.showTerrain = showTerrainInput.checked;
+    if (!state.showTerrain) {
+      return;
+    }
+    try {
+      await loadTerrain();
+    } catch (error) {
+      state.showTerrain = false;
+      showTerrainInput.checked = false;
+      showStatus(error.message, true);
+      console.error(error);
+    }
+  });
+
   showGridInput.addEventListener("change", () => {
     state.showGrid = showGridInput.checked;
   });
@@ -1274,6 +1738,8 @@ function bindEvents() {
   showPoliticalBoundariesInput.addEventListener("change", async () => {
     state.showPoliticalBoundaries = showPoliticalBoundariesInput.checked;
     if (!state.showPoliticalBoundaries) {
+      state.showCountyLabels = false;
+      showCountyLabelsInput.checked = false;
       return;
     }
     try {
@@ -1286,9 +1752,36 @@ function bindEvents() {
     }
   });
 
+  countyColorInput.addEventListener("input", () => {
+    state.countyColor = normalizeHexColor(countyColorInput.value, state.countyColor);
+  });
+
+  showCountyLabelsInput.addEventListener("change", async () => {
+    state.showCountyLabels = showCountyLabelsInput.checked;
+    if (state.showCountyLabels) {
+      state.showPoliticalBoundaries = true;
+      showPoliticalBoundariesInput.checked = true;
+    }
+    if (!state.showPoliticalBoundaries) {
+      return;
+    }
+    try {
+      await loadPoliticalBoundaries();
+    } catch (error) {
+      state.showPoliticalBoundaries = false;
+      state.showCountyLabels = false;
+      showPoliticalBoundariesInput.checked = false;
+      showCountyLabelsInput.checked = false;
+      showStatus(error.message, true);
+      console.error(error);
+    }
+  });
+
   showPlaceBoundariesInput.addEventListener("change", async () => {
     state.showPlaceBoundaries = showPlaceBoundariesInput.checked;
     if (!state.showPlaceBoundaries) {
+      state.showPlaceLabels = false;
+      showPlaceLabelsInput.checked = false;
       return;
     }
     try {
@@ -1299,6 +1792,103 @@ function bindEvents() {
       showStatus(error.message, true);
       console.error(error);
     }
+  });
+
+  placeColorInput.addEventListener("input", () => {
+    state.placeColor = normalizeHexColor(placeColorInput.value, state.placeColor);
+  });
+
+  showPlaceLabelsInput.addEventListener("change", async () => {
+    state.showPlaceLabels = showPlaceLabelsInput.checked;
+    if (state.showPlaceLabels) {
+      state.showPlaceBoundaries = true;
+      showPlaceBoundariesInput.checked = true;
+    }
+    if (!state.showPlaceBoundaries) {
+      return;
+    }
+    try {
+      await loadPlaceBoundaries();
+    } catch (error) {
+      state.showPlaceBoundaries = false;
+      state.showPlaceLabels = false;
+      showPlaceBoundariesInput.checked = false;
+      showPlaceLabelsInput.checked = false;
+      showStatus(error.message, true);
+      console.error(error);
+    }
+  });
+
+  showLakesInput.addEventListener("change", async () => {
+    state.showLakes = showLakesInput.checked;
+    if (!state.showLakes) {
+      return;
+    }
+    try {
+      await loadLakes();
+    } catch (error) {
+      state.showLakes = false;
+      showLakesInput.checked = false;
+      showStatus(error.message, true);
+      console.error(error);
+    }
+  });
+
+  showLakeFillInput.addEventListener("change", async () => {
+    state.showLakeFill = showLakeFillInput.checked;
+    if (!state.showLakeFill) {
+      return;
+    }
+    try {
+      await loadLakeFill();
+    } catch (error) {
+      state.showLakeFill = false;
+      showLakeFillInput.checked = false;
+      showStatus(error.message, true);
+      console.error(error);
+    }
+  });
+
+  lakeColorInput.addEventListener("input", () => {
+    state.lakeColor = normalizeHexColor(lakeColorInput.value, state.lakeColor);
+  });
+
+  showRiversInput.addEventListener("change", async () => {
+    state.showRivers = showRiversInput.checked;
+    if (!state.showRivers) {
+      return;
+    }
+    try {
+      await loadRivers();
+    } catch (error) {
+      state.showRivers = false;
+      showRiversInput.checked = false;
+      showStatus(error.message, true);
+      console.error(error);
+    }
+  });
+
+  riverColorInput.addEventListener("input", () => {
+    state.riverColor = normalizeHexColor(riverColorInput.value, state.riverColor);
+  });
+
+  showRoadsInput.addEventListener("change", async () => {
+    state.showRoads = showRoadsInput.checked;
+    if (!state.showRoads) {
+      return;
+    }
+    try {
+      await loadRoads();
+    } catch (error) {
+      console.error(error);
+      state.showRoads = false;
+      showRoadsInput.checked = false;
+      showStatus(error.message, true);
+    }
+  });
+
+  roadColorInput.addEventListener("input", () => {
+    state.roadColor = normalizeHexColor(roadColorInput.value, state.roadColor);
   });
 
   showAllFaultsInput.addEventListener("change", async () => {
@@ -1318,6 +1908,14 @@ function bindEvents() {
 
   opacityInput.addEventListener("input", () => {
     state.opacity = Number(opacityInput.value) / 100;
+  });
+
+  terrainExaggerationInput.addEventListener("input", () => {
+    state.terrainExaggeration = Number(terrainExaggerationInput.value);
+  });
+
+  terrainOpacityInput.addEventListener("input", () => {
+    state.terrainOpacity = Number(terrainOpacityInput.value) / 100;
   });
 
   document.querySelector("#reset-camera").addEventListener("click", () => {
