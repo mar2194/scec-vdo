@@ -283,6 +283,10 @@ h2 {
   cursor: grabbing;
 }
 
+#viewer-canvas.is-panning {
+  cursor: move;
+}
+
 .grid-labels,
 .fault-labels {
   position: absolute;

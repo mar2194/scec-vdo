@@ -4,6 +4,12 @@
   "type": "module",
   "scripts": {
     "convert:faults": "python3 convert/scecvdo_convert/cfm/convert_tsurf.py",
+    "download:cfm7-preferred": "python3 convert/scecvdo_convert/cfm/download_cfm_explorer.py",
+    "convert:cfm7-preferred": "python3 convert/scecvdo_convert/cfm/convert_tsurf.py --source public-data/faults/cfm7-preferred/source/1000m --output public-data/faults --all --group-id cfm7-preferred --group-name 'CFM 7.0 Preferred 1000m' --datum NAD27 --utm-zone 11 --merge-manifest",
+    "convert:elevation-harp": "python3 convert/scecvdo_convert/elevation/build_harp_dem.py",
+    "convert:political-boundaries": "python3 convert/scecvdo_convert/boundaries/convert_political_boundaries.py",
+    "convert:political-counties": "python3 convert/scecvdo_convert/boundaries/convert_ca_counties.py",
+    "convert:political-places": "python3 convert/scecvdo_convert/boundaries/convert_ca_places.py",
     "dev": "node client/scripts/dev-server.mjs",
     "smoke": "node client/scripts/smoke-test.mjs"
   },

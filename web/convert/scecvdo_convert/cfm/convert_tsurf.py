@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Convert a local CFM5 TSurf sample into browser-friendly mesh JSON."""
+"""Convert local CFM GOCAD TSurf files into browser-friendly mesh JSON."""
 
 from __future__ import annotations
 
@@ -31,8 +31,10 @@ DEFAULT_FAULT_FILES = [
     "PNRA-ELSZ-CYMT-Elsinore_fault-CFM1.ts",
 ]
 
-WGS84_A_METERS = 6378137.0
-WGS84_B_METERS = 6356752.31414
+ELLIPSOIDS = {
+    "WGS84": (6378137.0, 6356752.31414),
+    "NAD27": (6378206.4, 6356583.8),
+}
 UTM_SCALE = 0.9996
 LEGACY_EQUATORIAL_RADIUS_KM = 6378.140
 LEGACY_POLAR_RADIUS_KM = 6356.755
@@ -69,10 +71,21 @@ def parse_color(line: str) -> str:
     return "#c8c8c8"
 
 
-def utm_to_lat_lon(easting: float, northing: float, zone: int = 11) -> tuple[float, float]:
+def utm_to_lat_lon(
+    easting: float,
+    northing: float,
+    zone: int = 11,
+    datum: str = "WGS84",
+) -> tuple[float, float]:
     """Convert UTM meters to latitude/longitude for the northern hemisphere."""
 
-    eccentricity_sq = (WGS84_A_METERS**2 - WGS84_B_METERS**2) / WGS84_A_METERS**2
+    try:
+        major_axis, minor_axis = ELLIPSOIDS[datum.upper()]
+    except KeyError as exc:
+        supported = ", ".join(sorted(ELLIPSOIDS))
+        raise ValueError(f"Unsupported UTM datum {datum!r}. Choose one of: {supported}") from exc
+
+    eccentricity_sq = (major_axis**2 - minor_axis**2) / major_axis**2
     eccentricity_prime_sq = eccentricity_sq / (1 - eccentricity_sq)
     x = easting - 500000.0
     y = northing
@@ -80,7 +93,7 @@ def utm_to_lat_lon(easting: float, northing: float, zone: int = 11) -> tuple[flo
     longitude_origin = (zone - 1) * 6 - 180 + 3
     meridional_arc = y / UTM_SCALE
     mu = meridional_arc / (
-        WGS84_A_METERS
+        major_axis
         * (
             1
             - eccentricity_sq / 4
@@ -101,11 +114,11 @@ def utm_to_lat_lon(easting: float, northing: float, zone: int = 11) -> tuple[flo
     cos_phi1 = math.cos(phi1)
     tan_phi1 = math.tan(phi1)
 
-    n1 = WGS84_A_METERS / math.sqrt(1 - eccentricity_sq * sin_phi1**2)
+    n1 = major_axis / math.sqrt(1 - eccentricity_sq * sin_phi1**2)
     t1 = tan_phi1**2
     c1 = eccentricity_prime_sq * cos_phi1**2
     r1 = (
-        WGS84_A_METERS
+        major_axis
         * (1 - eccentricity_sq)
         / (1 - eccentricity_sq * sin_phi1**2) ** 1.5
     )
@@ -164,12 +177,19 @@ def transform_lat_lon_height(lat: float, lon: float, height_km: float) -> tuple[
     return x, y, z
 
 
+def resolution_from_stem(stem: str) -> str:
+    match = re.search(r"_(native|500m|1000m|2000m)$", stem, flags=re.IGNORECASE)
+    return match.group(1).lower() if match else ""
+
+
 def metadata_from_path(path: Path) -> dict[str, str]:
     stem = path.stem
-    parts = stem.split("-")
+    resolution = resolution_from_stem(stem)
+    metadata_stem = re.sub(r"_(native|500m|1000m|2000m)$", "", stem, flags=re.IGNORECASE)
+    parts = metadata_stem.split("-")
     cfm_version = parts[-1] if parts and re.fullmatch(r"CFM\d+", parts[-1]) else ""
     display_tokens = parts[3:-1] if cfm_version and len(parts) > 4 else parts[3:]
-    display_name = " ".join(display_tokens).replace("_", " ").strip() or stem.replace("_", " ")
+    display_name = " ".join(display_tokens).replace("_", " ").strip() or metadata_stem.replace("_", " ")
 
     return {
         "id": slugify(stem),
@@ -178,10 +198,23 @@ def metadata_from_path(path: Path) -> dict[str, str]:
         "system": parts[1] if len(parts) > 1 else "",
         "section": parts[2] if len(parts) > 2 else "",
         "cfmVersion": cfm_version,
+        "resolution": resolution,
     }
 
 
-def parse_tsurf(path: Path, source_root: Path, output_group: str) -> tuple[dict, dict]:
+def source_path_for_manifest(path: Path) -> str:
+    try:
+        return path.relative_to(repo_root()).as_posix()
+    except ValueError:
+        return path.as_posix()
+
+
+def parse_tsurf(
+    path: Path,
+    output_group: str,
+    utm_zone: int,
+    datum: str,
+) -> tuple[dict, dict]:
     metadata = metadata_from_path(path)
     declared_name = ""
     color = "#c8c8c8"
@@ -211,7 +244,7 @@ def parse_tsurf(path: Path, source_root: Path, output_group: str) -> tuple[dict,
                 easting = float(parts[2])
                 northing = float(parts[3])
                 elevation_km = float(parts[4]) / 1000.0
-                lat, lon = utm_to_lat_lon(easting, northing)
+                lat, lon = utm_to_lat_lon(easting, northing, zone=utm_zone, datum=datum)
                 xyz = transform_lat_lon_height(lat, lon, elevation_km)
                 vertex_indices_by_id[vertex_id] = len(vertices) // 3
                 vertices.extend(xyz)
@@ -243,7 +276,7 @@ def parse_tsurf(path: Path, source_root: Path, output_group: str) -> tuple[dict,
     ys = vertices[1::3]
     zs = vertices[2::3]
 
-    source_path = path.relative_to(repo_root()).as_posix()
+    source_path = source_path_for_manifest(path)
     fault_meta = {
         **metadata,
         "declaredName": declared_name,
@@ -300,6 +333,21 @@ def group_for_path(path: Path) -> str:
     return "cfm5-alt" if "alt" in parent else "cfm5-primary"
 
 
+def group_name_for_id(group_id: str, requested_name: str = "") -> str:
+    if requested_name:
+        return requested_name
+
+    known_names = {
+        "cfm5-primary": "CFM5 Primary",
+        "cfm5-alt": "CFM5 Alternative",
+        "cfm7-preferred": "CFM 7.0 Preferred 1000m",
+    }
+    if group_id in known_names:
+        return known_names[group_id]
+
+    return group_id.replace("-", " ").title()
+
+
 def write_json(path: Path, payload: dict, pretty: bool = False) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", encoding="utf-8") as stream:
@@ -330,18 +378,43 @@ def main() -> None:
         action="store_true",
         help="Convert all local CFM5 TSurf files instead of the local MVP sample.",
     )
+    parser.add_argument(
+        "--group-id",
+        help="Force all converted files into this output group id.",
+    )
+    parser.add_argument(
+        "--group-name",
+        help="Display name for --group-id in group.json and the manifest.",
+    )
+    parser.add_argument(
+        "--merge-manifest",
+        action="store_true",
+        help="Merge generated groups into an existing manifest instead of replacing it.",
+    )
+    parser.add_argument(
+        "--utm-zone",
+        type=int,
+        default=11,
+        help="UTM zone for TSurf X/Y coordinates.",
+    )
+    parser.add_argument(
+        "--datum",
+        choices=sorted(ELLIPSOIDS),
+        default="WGS84",
+        help="Datum/ellipsoid for inverse UTM conversion.",
+    )
     args = parser.parse_args()
 
     source_root = args.source.resolve()
     output_root = args.output.resolve()
     files = selected_files(source_root, args.all)
     generated_at = datetime.now(timezone.utc).isoformat()
-    groups: dict[str, list[dict]] = {"cfm5-primary": [], "cfm5-alt": []}
+    groups: dict[str, list[dict]] = {} if args.group_id else {"cfm5-primary": [], "cfm5-alt": []}
     all_faults: list[dict] = []
 
     for tsurf_path in files:
-        group_id = group_for_path(tsurf_path)
-        fault_meta, mesh = parse_tsurf(tsurf_path, source_root, group_id)
+        group_id = args.group_id or group_for_path(tsurf_path)
+        fault_meta, mesh = parse_tsurf(tsurf_path, group_id, args.utm_zone, args.datum)
         mesh_path = output_root / group_id / "faults" / f"{fault_meta['id']}.json"
         write_json(mesh_path, mesh)
         groups.setdefault(group_id, []).append(fault_meta)
@@ -351,12 +424,17 @@ def main() -> None:
     for group_id, faults in groups.items():
         if not faults:
             continue
-        group_name = "CFM5 Primary" if group_id == "cfm5-primary" else "CFM5 Alternative"
+        group_name = group_name_for_id(group_id, args.group_name or "")
         group_payload = {
             "version": 1,
             "id": group_id,
             "name": group_name,
             "generatedAt": generated_at,
+            "source": source_path_for_manifest(source_root),
+            "coordinateSystem": {
+                "input": f"GOCAD TSurf UTM zone {args.utm_zone}N, {args.datum} meters",
+                "output": "Legacy SCEC-VDO globe XYZ kilometers from Transform.java",
+            },
             "faultCount": len(faults),
             "faults": faults,
         }
@@ -370,19 +448,35 @@ def main() -> None:
             }
         )
 
-    default_fault_ids = [
-        fault["id"]
-        for fault in all_faults
-        if fault["group"] == "cfm5-primary" and "San Andreas" in fault["name"]
-    ][:6]
+    existing_manifest = {}
+    manifest_path = output_root / "manifest.json"
+    if args.merge_manifest and manifest_path.exists():
+        with manifest_path.open("r", encoding="utf-8") as stream:
+            existing_manifest = json.load(stream)
+
+    generated_group_ids = set(groups)
+    if existing_manifest:
+        group_entries = [
+            group for group in existing_manifest.get("groups", []) if group.get("id") not in generated_group_ids
+        ] + group_entries
+        all_faults = [
+            fault for fault in existing_manifest.get("faults", []) if fault.get("group") not in generated_group_ids
+        ] + all_faults
+        default_fault_ids = existing_manifest.get("defaultFaultIds", [])
+    else:
+        default_fault_ids = [
+            fault["id"]
+            for fault in all_faults
+            if fault["group"] == "cfm5-primary" and "San Andreas" in fault["name"]
+        ][:6]
 
     manifest = {
         "version": 1,
         "generatedAt": generated_at,
-        "source": source_root.relative_to(root).as_posix(),
+        "source": source_path_for_manifest(source_root),
         "assetKind": "cfm-tsurf-json",
         "coordinateSystem": {
-            "input": "CFM5 GOCAD TSurf UTM zone 11N, WGS84 meters",
+            "input": "See each group.json for source-specific TSurf datum and resolution.",
             "output": "Legacy SCEC-VDO globe XYZ kilometers from Transform.java",
         },
         "defaultFaultIds": default_fault_ids,

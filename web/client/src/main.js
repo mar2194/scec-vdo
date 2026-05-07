@@ -4,6 +4,9 @@ const faultCount = document.querySelector("#fault-count");
 const searchInput = document.querySelector("#fault-search");
 const showGridInput = document.querySelector("#show-grid");
 const showGridLabelsInput = document.querySelector("#show-grid-labels");
+const showPoliticalBoundariesInput = document.querySelector("#show-political-boundaries");
+const showPlaceBoundariesInput = document.querySelector("#show-place-boundaries");
+const showAllFaultsInput = document.querySelector("#show-all-faults");
 const showAltInput = document.querySelector("#show-alt");
 const opacityInput = document.querySelector("#opacity");
 const statusBanner = document.querySelector("#status-banner");
@@ -30,10 +33,14 @@ const state = {
   query: "",
   showGrid: true,
   showGridLabels: false,
+  showPoliticalBoundaries: false,
+  showPlaceBoundaries: false,
   showAlt: true,
   opacity: 0.88,
   renderMode: "surface",
   grid: undefined,
+  politicalBoundaries: undefined,
+  placeBoundaries: undefined,
   scene: {
     center: [0, 0, 0],
     radius: 1,
@@ -52,7 +59,7 @@ const state = {
     x: 0,
     y: 0,
     moved: 0,
-    focusGesture: false
+    mode: "orbit"
   },
   lastViewProjection: identityMatrix()
 };
@@ -273,7 +280,8 @@ async function loadManifest() {
   hideStatus();
 }
 
-async function loadFault(id) {
+async function loadFault(id, options = {}) {
+  const { announce = true } = options;
   if (state.faults.has(id)) {
     return state.faults.get(id);
   }
@@ -283,7 +291,9 @@ async function loadFault(id) {
     return undefined;
   }
 
-  showStatus(`Loading ${meta.name}`, true);
+  if (announce) {
+    showStatus(`Loading ${meta.name}`, true);
+  }
   const response = await fetch(`/public-data/${meta.meshPath}`);
   if (!response.ok) {
     throw new Error(`Unable to load mesh for ${meta.name}`);
@@ -292,6 +302,57 @@ async function loadFault(id) {
   const renderData = createFaultRenderData(mesh);
   state.faults.set(id, renderData);
   return renderData;
+}
+
+async function loadFaults(ids) {
+  const unloadedIds = ids.filter((id) => !state.faults.has(id));
+  const batchSize = 18;
+  for (let index = 0; index < unloadedIds.length; index += batchSize) {
+    const batch = unloadedIds.slice(index, index + batchSize);
+    showStatus(
+      `Loading faults ${Math.min(index + batch.length, unloadedIds.length).toLocaleString()} of ${unloadedIds.length.toLocaleString()}`,
+      true
+    );
+    await Promise.all(batch.map((id) => loadFault(id, { announce: false })));
+  }
+}
+
+async function loadBoundaryLayer(stateKey, path, label) {
+  if (state[stateKey]) {
+    return state[stateKey];
+  }
+
+  showStatus(`Loading ${label}`, true);
+  const response = await fetch(path);
+  if (!response.ok) {
+    throw new Error(`${label} mesh not found. Run npm run convert:political-boundaries from web/.`);
+  }
+  const payload = await response.json();
+  const vertices = new Float32Array(payload.lineVertices);
+  const renderData = {
+    ...payload,
+    vertexBuffer: createBuffer(state.gl, state.gl.ARRAY_BUFFER, vertices),
+    vertexCount: vertices.length / 3
+  };
+  state[stateKey] = renderData;
+  showStatus(`${label} loaded`);
+  return renderData;
+}
+
+async function loadPoliticalBoundaries() {
+  return loadBoundaryLayer(
+    "politicalBoundaries",
+    "/public-data/political-boundaries/ca_counties/counties-boundaries.json",
+    "county boundaries"
+  );
+}
+
+async function loadPlaceBoundaries() {
+  return loadBoundaryLayer(
+    "placeBoundaries",
+    "/public-data/political-boundaries/ca_places/places-boundaries.json",
+    "place boundaries"
+  );
 }
 
 function createGridFromManifest() {
@@ -380,16 +441,35 @@ function latLonHeightToXyz(lat, lon, heightKm) {
 }
 
 function visibleMetas() {
-  return state.faultMetas.filter((fault) => {
-    if (!state.showAlt && fault.group === "cfm5-alt") {
-      return false;
-    }
+  return displayableMetas().filter((fault) => {
     const query = state.query.trim().toLowerCase();
     if (!query) {
       return true;
     }
     return `${fault.name} ${fault.source} ${fault.tokens.join(" ")}`.toLowerCase().includes(query);
   });
+}
+
+function displayableMetas() {
+  return state.faultMetas.filter((fault) => state.showAlt || fault.group !== "cfm5-alt");
+}
+
+function groupNameForId(groupId) {
+  const group = state.manifest?.groups?.find((entry) => entry.id === groupId);
+  return group?.name || groupId || "Unknown";
+}
+
+function shortGroupNameForId(groupId) {
+  if (groupId === "cfm7-preferred") {
+    return "CFM7 Preferred";
+  }
+  if (groupId === "cfm5-primary") {
+    return "CFM5 Primary";
+  }
+  if (groupId === "cfm5-alt") {
+    return "CFM5 Alternative";
+  }
+  return groupNameForId(groupId);
 }
 
 function renderFaultList() {
@@ -402,6 +482,7 @@ function renderFaultList() {
     empty.className = "empty-state";
     empty.textContent = "No matching faults";
     faultList.append(empty);
+    syncAllFaultsInput();
     return;
   }
 
@@ -432,7 +513,12 @@ function renderFaultList() {
     title.textContent = meta.name;
     const subtitle = document.createElement("span");
     subtitle.className = "fault-meta";
-    subtitle.textContent = `${meta.region} / ${meta.system} / ${meta.cfmVersion || "CFM"}`;
+    subtitle.textContent = [
+      shortGroupNameForId(meta.group),
+      meta.region,
+      meta.system,
+      meta.cfmVersion || "CFM"
+    ].filter(Boolean).join(" / ");
     label.append(title, subtitle);
 
     row.append(checkbox, swatch, label);
@@ -452,6 +538,7 @@ function renderFaultList() {
   }
 
   faultList.append(fragment);
+  syncAllFaultsInput();
 }
 
 async function setFaultVisible(id, visible) {
@@ -470,6 +557,39 @@ async function setFaultVisible(id, visible) {
   updateStats();
 }
 
+async function setAllFaultsVisible(visible, options = {}) {
+  const { resetCamera = true } = options;
+  if (!visible) {
+    state.visibleIds.clear();
+    state.selectedId = undefined;
+    renderFaultList();
+    renderDetails();
+    updateStats();
+    showStatus("All faults hidden");
+    return;
+  }
+
+  const ids = displayableMetas().map((fault) => fault.id);
+  ids.forEach((id) => state.visibleIds.add(id));
+  renderFaultList();
+  renderDetails();
+  updateStats();
+  await loadFaults(ids);
+  fitSceneToVisible(resetCamera);
+  renderFaultList();
+  renderDetails();
+  updateStats();
+  showStatus("All faults visible");
+}
+
+function syncAllFaultsInput() {
+  const ids = displayableMetas().map((fault) => fault.id);
+  const visibleCount = ids.filter((id) => state.visibleIds.has(id)).length;
+  showAllFaultsInput.disabled = ids.length === 0;
+  showAllFaultsInput.checked = ids.length > 0 && visibleCount === ids.length;
+  showAllFaultsInput.indeterminate = visibleCount > 0 && visibleCount < ids.length;
+}
+
 function renderDetails() {
   const meta = state.faultMetas.find((fault) => fault.id === state.selectedId);
   if (!meta) {
@@ -480,7 +600,7 @@ function renderDetails() {
 
   selectedName.textContent = meta.name;
   const rows = [
-    detailRow("Group", meta.group === "cfm5-alt" ? "CFM5 Alternative" : "CFM5 Primary"),
+    detailRow("Group", groupNameForId(meta.group)),
     detailRow("Source", meta.source),
     detailRow("Code", [meta.region, meta.system, meta.section].filter(Boolean).join(" / ")),
     detailRow("Version", meta.cfmVersion || "Unknown"),
@@ -492,6 +612,9 @@ function renderDetails() {
     detailRow("Color", getFaultColor(meta.id), "color"),
     faultStyleControls(meta)
   ];
+  if (meta.resolution) {
+    rows.splice(5, 0, detailRow("Resolution", meta.resolution));
+  }
   faultDetails.replaceChildren(...rows);
 }
 
@@ -720,8 +843,7 @@ function drawScene() {
   gl.enable(gl.BLEND);
   gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
-  const aspect = canvas.width / Math.max(canvas.height, 1);
-  const projection = perspectiveMatrix((48 * Math.PI) / 180, aspect, 0.01, 100);
+  const projection = currentProjectionMatrix();
   const view = cameraViewMatrix();
   state.lastViewProjection = multiplyMatrices(projection, view);
   updateOverlays();
@@ -764,8 +886,27 @@ function drawScene() {
     }
   }
 
+  if (
+    (state.showPoliticalBoundaries && state.politicalBoundaries) ||
+    (state.showPlaceBoundaries && state.placeBoundaries)
+  ) {
+    gl.disable(gl.DEPTH_TEST);
+    gl.depthMask(false);
+    if (state.showPoliticalBoundaries && state.politicalBoundaries) {
+      drawBoundaryLayer(state.politicalBoundaries, [0.93, 0.86, 0.58, 0.72]);
+    }
+    if (state.showPlaceBoundaries && state.placeBoundaries) {
+      drawBoundaryLayer(state.placeBoundaries, [0.46, 0.76, 0.95, 0.62]);
+    }
+    gl.enable(gl.DEPTH_TEST);
+  }
+
   gl.depthMask(true);
   window.requestAnimationFrame(drawScene);
+}
+
+function drawBoundaryLayer(boundaryLayer, color) {
+  drawArrays(state.programs.line, boundaryLayer.vertexBuffer, boundaryLayer.vertexCount, color);
 }
 
 function drawArrays(programInfo, vertexBuffer, vertexCount, color) {
@@ -799,7 +940,7 @@ function bindProgram(programInfo, color) {
 
 function currentProjectionMatrix() {
   const aspect = canvas.width / Math.max(canvas.height, 1);
-  return perspectiveMatrix((48 * Math.PI) / 180, aspect, 0.01, 100);
+  return perspectiveMatrix((48 * Math.PI) / 180, aspect, 0.000001, 100);
 }
 
 function cameraViewMatrix() {
@@ -1077,6 +1218,25 @@ function orbitCamera(dx, dy) {
   }
 }
 
+function panCamera(dx, dy) {
+  const viewVector = subtractVectors(state.camera.targetWorld, state.camera.eyeWorld);
+  const distanceToTarget = Math.max(vectorLength(viewVector), state.scene.radius * 0.0001);
+  const viewDirection = normalize(viewVector);
+  const rightAxis = normalize(cross(viewDirection, state.camera.upWorld));
+  const upAxis = normalize(state.camera.upWorld);
+  const fov = (48 * Math.PI) / 180;
+  const worldUnitsPerPixel = (2 * Math.tan(fov / 2) * distanceToTarget) / Math.max(canvas.clientHeight, 1);
+  const delta = addVectors(
+    scaleVector(rightAxis, -dx * worldUnitsPerPixel * 1.1),
+    scaleVector(upAxis, dy * worldUnitsPerPixel * 1.1)
+  );
+
+  state.camera.eyeWorld = addVectors(state.camera.eyeWorld, delta);
+  state.camera.targetWorld = addVectors(state.camera.targetWorld, delta);
+  state.camera.pivotWorld = addVectors(state.camera.pivotWorld, delta);
+  state.camera.focusGeo = latLonFromXyz(state.camera.pivotWorld);
+}
+
 function rotateCameraAroundPivot(axis, angle) {
   const pivot = state.camera.pivotWorld;
   state.camera.eyeWorld = rotatePointAroundAxis(state.camera.eyeWorld, pivot, axis, angle);
@@ -1087,9 +1247,8 @@ function rotateCameraAroundPivot(axis, angle) {
 function zoomCamera(zoom) {
   const viewVector = subtractVectors(state.camera.eyeWorld, state.camera.targetWorld);
   const currentDistance = vectorLength(viewVector);
-  const minDistance = state.scene.radius * 1.05;
-  const maxDistance = state.scene.radius * 9;
-  const nextDistance = Math.max(minDistance, Math.min(maxDistance, currentDistance * zoom));
+  const minDistance = Math.max(state.scene.radius * 1e-7, 1e-6);
+  const nextDistance = Math.max(minDistance, currentDistance * zoom);
   const direction = normalize(viewVector);
   state.camera.eyeWorld = [
     state.camera.targetWorld[0] + direction[0] * nextDistance,
@@ -1112,8 +1271,46 @@ function bindEvents() {
     state.showGridLabels = showGridLabelsInput.checked;
   });
 
-  showAltInput.addEventListener("change", () => {
+  showPoliticalBoundariesInput.addEventListener("change", async () => {
+    state.showPoliticalBoundaries = showPoliticalBoundariesInput.checked;
+    if (!state.showPoliticalBoundaries) {
+      return;
+    }
+    try {
+      await loadPoliticalBoundaries();
+    } catch (error) {
+      state.showPoliticalBoundaries = false;
+      showPoliticalBoundariesInput.checked = false;
+      showStatus(error.message, true);
+      console.error(error);
+    }
+  });
+
+  showPlaceBoundariesInput.addEventListener("change", async () => {
+    state.showPlaceBoundaries = showPlaceBoundariesInput.checked;
+    if (!state.showPlaceBoundaries) {
+      return;
+    }
+    try {
+      await loadPlaceBoundaries();
+    } catch (error) {
+      state.showPlaceBoundaries = false;
+      showPlaceBoundariesInput.checked = false;
+      showStatus(error.message, true);
+      console.error(error);
+    }
+  });
+
+  showAllFaultsInput.addEventListener("change", async () => {
+    await setAllFaultsVisible(showAllFaultsInput.checked);
+  });
+
+  showAltInput.addEventListener("change", async () => {
     state.showAlt = showAltInput.checked;
+    if (showAllFaultsInput.checked) {
+      await setAllFaultsVisible(true, { resetCamera: false });
+      return;
+    }
     renderFaultList();
     fitSceneToVisible(false);
     updateStats();
@@ -1141,11 +1338,13 @@ function bindEvents() {
   });
 
   canvas.addEventListener("pointerdown", (event) => {
+    event.preventDefault();
     state.pointer.active = true;
     state.pointer.x = event.clientX;
     state.pointer.y = event.clientY;
     state.pointer.moved = 0;
-    state.pointer.focusGesture = event.metaKey || event.ctrlKey;
+    state.pointer.mode = event.button === 1 ? "pan" : event.metaKey || event.ctrlKey ? "focus" : "orbit";
+    canvas.classList.toggle("is-panning", state.pointer.mode === "pan");
     canvas.setPointerCapture(event.pointerId);
   });
 
@@ -1158,21 +1357,48 @@ function bindEvents() {
     state.pointer.x = event.clientX;
     state.pointer.y = event.clientY;
     state.pointer.moved += Math.abs(dx) + Math.abs(dy);
-    if (!state.pointer.focusGesture) {
+    if (state.pointer.mode === "pan") {
+      panCamera(dx, dy);
+    } else if (state.pointer.mode === "orbit") {
       orbitCamera(dx, dy);
     }
   });
 
   canvas.addEventListener("pointerup", (event) => {
-    if (state.pointer.moved < 5) {
-      if (state.pointer.focusGesture || event.metaKey || event.ctrlKey) {
+    if (state.pointer.moved < 5 && state.pointer.mode !== "pan") {
+      if (state.pointer.mode === "focus" || event.metaKey || event.ctrlKey) {
         setFocusFromClick(event.clientX, event.clientY);
       } else {
         selectNearestFault(event.clientX, event.clientY);
       }
     }
     state.pointer.active = false;
-    state.pointer.focusGesture = false;
+    state.pointer.mode = "orbit";
+    canvas.classList.remove("is-panning");
+    if (canvas.hasPointerCapture(event.pointerId)) {
+      canvas.releasePointerCapture(event.pointerId);
+    }
+  });
+
+  canvas.addEventListener("pointercancel", (event) => {
+    state.pointer.active = false;
+    state.pointer.mode = "orbit";
+    canvas.classList.remove("is-panning");
+    if (canvas.hasPointerCapture(event.pointerId)) {
+      canvas.releasePointerCapture(event.pointerId);
+    }
+  });
+
+  canvas.addEventListener("mousedown", (event) => {
+    if (event.button === 1) {
+      event.preventDefault();
+    }
+  });
+
+  canvas.addEventListener("auxclick", (event) => {
+    if (event.button === 1) {
+      event.preventDefault();
+    }
   });
 
   canvas.addEventListener(
@@ -1284,6 +1510,14 @@ function multiplyMatrixVector(matrix, vector) {
 function normalize(vector) {
   const length = Math.hypot(vector[0], vector[1], vector[2]) || 1;
   return [vector[0] / length, vector[1] / length, vector[2] / length];
+}
+
+function latLonFromXyz(point) {
+  const radius = vectorLength(point) || 1;
+  return {
+    lat: (Math.asin(Math.max(-1, Math.min(1, point[2] / radius))) * 180) / Math.PI,
+    lon: (Math.atan2(-point[0], point[1]) * 180) / Math.PI
+  };
 }
 
 function cross(a, b) {
