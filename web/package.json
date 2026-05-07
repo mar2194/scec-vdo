@@ -1,0 +1,13 @@
+{
+  "name": "scec-vdo-web",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "convert:faults": "python3 convert/scecvdo_convert/cfm/convert_tsurf.py",
+    "dev": "node client/scripts/dev-server.mjs",
+    "smoke": "node client/scripts/smoke-test.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -1,0 +1,101 @@
+{
+  "version": 1,
+  "id": "cfm5-alt",
+  "name": "CFM5 Alternative",
+  "generatedAt": "2026-05-07T03:31:34.154997+00:00",
+  "faultCount": 2,
+  "faults": [
+    {
+      "id": "safs-safz-mult-san-andreas-fault-fuis-cfm3",
+      "name": "San Andreas fault FUIS",
+      "region": "SAFS",
+      "system": "SAFZ",
+      "section": "MULT",
+      "cfmVersion": "CFM3",
+      "declaredName": "SAFS-SAFZ-MULT-San_Andreas_fault-FUIS-CFM3",
+      "group": "cfm5-alt",
+      "source": "data/CFM/CFM5_release_2014/tsurf/CFM5_socal_alt/SAFS-SAFZ-MULT-San_Andreas_fault-FUIS-CFM3.ts",
+      "meshPath": "faults/cfm5-alt/faults/safs-safz-mult-san-andreas-fault-fuis-cfm3.json",
+      "color": "#0000cd",
+      "bounds": {
+        "lat": [
+          33.363245,
+          35.984635
+        ],
+        "lon": [
+          -120.556447,
+          -115.684507
+        ],
+        "depthKm": [
+          -2.067,
+          16.607676
+        ],
+        "xyz": [
+          [
+            4432.896067,
+            -2620.2509,
+            3502.101574
+          ],
+          [
+            4793.949207,
+            -2301.640717,
+            3743.674099
+          ]
+        ]
+      },
+      "vertexCount": 946,
+      "triangleCount": 1409,
+      "tokens": [
+        "SAFS",
+        "SAFZ",
+        "MULT"
+      ]
+    },
+    {
+      "id": "pnra-elsz-cymt-elsinore-fault-cfm1",
+      "name": "Elsinore fault",
+      "region": "PNRA",
+      "system": "ELSZ",
+      "section": "CYMT",
+      "cfmVersion": "CFM1",
+      "declaredName": "PNRA-ELSZ-CYMT-Elsinore_fault-CFM1",
+      "group": "cfm5-alt",
+      "source": "data/CFM/CFM5_release_2014/tsurf/CFM5_socal_alt/PNRA-ELSZ-CYMT-Elsinore_fault-CFM1.ts",
+      "meshPath": "faults/cfm5-alt/faults/pnra-elsz-cymt-elsinore-fault-cfm1.json",
+      "color": "#c8c8c8",
+      "bounds": {
+        "lat": [
+          32.785041,
+          32.991196
+        ],
+        "lon": [
+          -116.443683,
+          -116.032247
+        ],
+        "depthKm": [
+          -0.953,
+          15.856956
+        ],
+        "xyz": [
+          [
+            4773.57159,
+            -2380.323866,
+            3445.586384
+          ],
+          [
+            4813.257553,
+            -2346.210928,
+            3470.009136
+          ]
+        ]
+      },
+      "vertexCount": 214,
+      "triangleCount": 336,
+      "tokens": [
+        "PNRA",
+        "ELSZ",
+        "CYMT"
+      ]
+    }
+  ]
+}

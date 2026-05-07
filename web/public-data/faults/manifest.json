@@ -1,0 +1,770 @@
+{
+  "version": 1,
+  "generatedAt": "2026-05-07T03:31:34.154997+00:00",
+  "source": "data/CFM/CFM5_release_2014/tsurf",
+  "assetKind": "cfm-tsurf-json",
+  "coordinateSystem": {
+    "input": "CFM5 GOCAD TSurf UTM zone 11N, WGS84 meters",
+    "output": "Legacy SCEC-VDO globe XYZ kilometers from Transform.java"
+  },
+  "defaultFaultIds": [
+    "safs-safz-clcz-san-andreas-fault-chlm-cfm4",
+    "safs-safz-clcz-san-andreas-fault-crrz-cfm4",
+    "safs-safz-coav-southern-san-andreas-fault-cfm4",
+    "safs-safz-mjvs-san-andreas-fault-cfm4",
+    "safs-safz-park-san-andreas-fault-cfm4",
+    "safs-safz-sbmt-san-andreas-fault-cfm4"
+  ],
+  "groups": [
+    {
+      "id": "cfm5-primary",
+      "name": "CFM5 Primary",
+      "path": "faults/cfm5-primary/group.json",
+      "faultCount": 14
+    },
+    {
+      "id": "cfm5-alt",
+      "name": "CFM5 Alternative",
+      "path": "faults/cfm5-alt/group.json",
+      "faultCount": 2
+    }
+  ],
+  "faults": [
+    {
+      "id": "safs-safz-clcz-san-andreas-fault-chlm-cfm4",
+      "name": "San Andreas fault CHLM",
+      "region": "SAFS",
+      "system": "SAFZ",
+      "section": "CLCZ",
+      "cfmVersion": "CFM4",
+      "declaredName": "SAFS-SAFZ-CLCZ-San_Andreas_fault-CHLM-CFM4",
+      "group": "cfm5-primary",
+      "source": "data/CFM/CFM5_release_2014/tsurf/CFM5_socal_primary/SAFS-SAFZ-CLCZ-San_Andreas_fault-CHLM-CFM4.ts",
+      "meshPath": "faults/cfm5-primary/faults/safs-safz-clcz-san-andreas-fault-chlm-cfm4.json",
+      "color": "#ba55d3",
+      "bounds": {
+        "lat": [
+          35.293832,
+          35.743639
+        ],
+        "lon": [
+          -120.29818,
+          -119.86149
+        ],
+        "depthKm": [
+          -0.695,
+          14.260563
+        ],
+        "xyz": [
+          [
+            4458.21756,
+            -2608.727768,
+            3673.127901
+          ],
+          [
+            4509.538176,
+            -2583.874162,
+            3721.778862
+          ]
+        ]
+      },
+      "vertexCount": 121,
+      "triangleCount": 203,
+      "tokens": [
+        "SAFS",
+        "SAFZ",
+        "CLCZ"
+      ]
+    },
+    {
+      "id": "safs-safz-clcz-san-andreas-fault-crrz-cfm4",
+      "name": "San Andreas fault CRRZ",
+      "region": "SAFS",
+      "system": "SAFZ",
+      "section": "CLCZ",
+      "cfmVersion": "CFM4",
+      "declaredName": "SAFS-SAFZ-CLCZ-San_Andreas_fault-CRRZ-CFM4",
+      "group": "cfm5-primary",
+      "source": "data/CFM/CFM5_release_2014/tsurf/CFM5_socal_primary/SAFS-SAFZ-CLCZ-San_Andreas_fault-CRRZ-CFM4.ts",
+      "meshPath": "faults/cfm5-primary/faults/safs-safz-clcz-san-andreas-fault-crrz-cfm4.json",
+      "color": "#ba55d3",
+      "bounds": {
+        "lat": [
+          34.694905,
+          35.303595
+        ],
+        "lon": [
+          -119.865094,
+          -118.501942
+        ],
+        "depthKm": [
+          -1.888,
+          17.013338
+        ],
+        "xyz": [
+          [
+            4499.883165,
+            -2589.070437,
+            3619.106243
+          ],
+          [
+            4604.313677,
+            -2494.400285,
+            3682.246583
+          ]
+        ]
+      },
+      "vertexCount": 345,
+      "triangleCount": 595,
+      "tokens": [
+        "SAFS",
+        "SAFZ",
+        "CLCZ"
+      ]
+    },
+    {
+      "id": "safs-safz-coav-southern-san-andreas-fault-cfm4",
+      "name": "Southern San Andreas fault",
+      "region": "SAFS",
+      "system": "SAFZ",
+      "section": "COAV",
+      "cfmVersion": "CFM4",
+      "declaredName": "SAFS-SAFZ-COAV-Southern_San_Andreas_fault-CFM4",
+      "group": "cfm5-primary",
+      "source": "data/CFM/CFM5_release_2014/tsurf/CFM5_socal_primary/SAFS-SAFZ-COAV-Southern_San_Andreas_fault-CFM4.ts",
+      "meshPath": "faults/cfm5-primary/faults/safs-safz-coav-southern-san-andreas-fault-cfm4.json",
+      "color": "#9932cc",
+      "bounds": {
+        "lat": [
+          33.340316,
+          33.776956
+        ],
+        "lon": [
+          -116.237851,
+          -115.70927
+        ],
+        "depthKm": [
+          -0.129,
+          16.767238
+        ],
+        "xyz": [
+          [
+            4737.94875,
+            -2341.302119,
+            3495.703731
+          ],
+          [
+            4795.965082,
+            -2305.043319,
+            3542.353752
+          ]
+        ]
+      },
+      "vertexCount": 145,
+      "triangleCount": 245,
+      "tokens": [
+        "SAFS",
+        "SAFZ",
+        "COAV"
+      ]
+    },
+    {
+      "id": "safs-safz-mjvs-san-andreas-fault-cfm4",
+      "name": "San Andreas fault",
+      "region": "SAFS",
+      "system": "SAFZ",
+      "section": "MJVS",
+      "cfmVersion": "CFM4",
+      "declaredName": "SAFS-SAFZ-MJVS-San_Andreas_fault-CFM4",
+      "group": "cfm5-primary",
+      "source": "data/CFM/CFM5_release_2014/tsurf/CFM5_socal_primary/SAFS-SAFZ-MJVS-San_Andreas_fault-CFM4.ts",
+      "meshPath": "faults/cfm5-primary/faults/safs-safz-mjvs-san-andreas-fault-cfm4.json",
+      "color": "#ba55d3",
+      "bounds": {
+        "lat": [
+          34.332312,
+          34.697147
+        ],
+        "lon": [
+          -118.502352,
+          -117.587502
+        ],
+        "depthKm": [
+          -1.26475,
+          13.366638
+        ],
+        "xyz": [
+          [
+            4593.671731,
+            -2500.146957,
+            3586.04775
+          ],
+          [
+            4664.045665,
+            -2431.592045,
+            3627.19472
+          ]
+        ]
+      },
+      "vertexCount": 173,
+      "triangleCount": 294,
+      "tokens": [
+        "SAFS",
+        "SAFZ",
+        "MJVS"
+      ]
+    },
+    {
+      "id": "safs-safz-park-san-andreas-fault-cfm4",
+      "name": "San Andreas fault",
+      "region": "SAFS",
+      "system": "SAFZ",
+      "section": "PARK",
+      "cfmVersion": "CFM4",
+      "declaredName": "SAFS-SAFZ-PARK-San_Andreas_fault-CFM4",
+      "group": "cfm5-primary",
+      "source": "data/CFM/CFM5_release_2014/tsurf/CFM5_socal_primary/SAFS-SAFZ-PARK-San_Andreas_fault-CFM4.ts",
+      "meshPath": "faults/cfm5-primary/faults/safs-safz-park-san-andreas-fault-cfm4.json",
+      "color": "#ba55d3",
+      "bounds": {
+        "lat": [
+          35.739052,
+          36.002261
+        ],
+        "lon": [
+          -120.570456,
+          -120.296957
+        ],
+        "depthKm": [
+          -0.6,
+          10.034708
+        ],
+        "xyz": [
+          [
+            4430.918209,
+            -2620.639001,
+            3715.712344
+          ],
+          [
+            4464.836348,
+            -2604.936713,
+            3745.175122
+          ]
+        ]
+      },
+      "vertexCount": 77,
+      "triangleCount": 126,
+      "tokens": [
+        "SAFS",
+        "SAFZ",
+        "PARK"
+      ]
+    },
+    {
+      "id": "safs-safz-sbmt-san-andreas-fault-cfm4",
+      "name": "San Andreas fault",
+      "region": "SAFS",
+      "system": "SAFZ",
+      "section": "SBMT",
+      "cfmVersion": "CFM4",
+      "declaredName": "SAFS-SAFZ-SBMT-San_Andreas_fault-CFM4",
+      "group": "cfm5-primary",
+      "source": "data/CFM/CFM5_release_2014/tsurf/CFM5_socal_primary/SAFS-SAFZ-SBMT-San_Andreas_fault-CFM4.ts",
+      "meshPath": "faults/cfm5-primary/faults/safs-safz-sbmt-san-andreas-fault-cfm4.json",
+      "color": "#ba55d3",
+      "bounds": {
+        "lat": [
+          34.055462,
+          34.333084
+        ],
+        "lon": [
+          -117.588853,
+          -116.975472
+        ],
+        "depthKm": [
+          -1.69125,
+          17.160484
+        ],
+        "xyz": [
+          [
+            4653.473405,
+            -2437.259424,
+            3558.349162
+          ],
+          [
+            4705.27123,
+            -2388.011143,
+            3594.393851
+          ]
+        ]
+      },
+      "vertexCount": 573,
+      "triangleCount": 994,
+      "tokens": [
+        "SAFS",
+        "SAFZ",
+        "SBMT"
+      ]
+    },
+    {
+      "id": "safs-safz-bszs-southern-san-andreas-blind-extension-cfm4",
+      "name": "Southern San Andreas blind extension",
+      "region": "SAFS",
+      "system": "SAFZ",
+      "section": "BSZS",
+      "cfmVersion": "CFM4",
+      "declaredName": "SAFS-SAFZ-BSZS-Southern_San_Andreas_blind_extension-CFM4",
+      "group": "cfm5-primary",
+      "source": "data/CFM/CFM5_release_2014/tsurf/CFM5_socal_primary/SAFS-SAFZ-BSZS-Southern_San_Andreas_blind_extension-CFM4.ts",
+      "meshPath": "faults/cfm5-primary/faults/safs-safz-bszs-southern-san-andreas-blind-extension-cfm4.json",
+      "color": "#9932cc",
+      "bounds": {
+        "lat": [
+          33.293201,
+          33.340614
+        ],
+        "lon": [
+          -115.710236,
+          -115.666355
+        ],
+        "depthKm": [
+          -1.045,
+          11.018823
+        ],
+        "xyz": [
+          [
+            4787.777119,
+            -2309.201416,
+            3492.097662
+          ],
+          [
+            4801.19498,
+            -2303.20528,
+            3501.926863
+          ]
+        ]
+      },
+      "vertexCount": 69,
+      "triangleCount": 112,
+      "tokens": [
+        "SAFS",
+        "SAFZ",
+        "BSZS"
+      ]
+    },
+    {
+      "id": "pnra-sjfz-sbrn-san-jacinto-claremont-fault-cfm4",
+      "name": "San Jacinto Claremont fault",
+      "region": "PNRA",
+      "system": "SJFZ",
+      "section": "SBRN",
+      "cfmVersion": "CFM4",
+      "declaredName": "PNRA-SJFZ-SBRN-San_Jacinto-Claremont_fault-CFM4",
+      "group": "cfm5-primary",
+      "source": "data/CFM/CFM5_release_2014/tsurf/CFM5_socal_primary/PNRA-SJFZ-SBRN-San_Jacinto-Claremont_fault-CFM4.ts",
+      "meshPath": "faults/cfm5-primary/faults/pnra-sjfz-sbrn-san-jacinto-claremont-fault-cfm4.json",
+      "color": "#ba55d3",
+      "bounds": {
+        "lat": [
+          33.982821,
+          34.286217
+        ],
+        "lon": [
+          -117.574483,
+          -117.17629
+        ],
+        "depthKm": [
+          -1.814,
+          17.098973
+        ],
+        "xyz": [
+          [
+            4656.498014,
+            -2437.449277,
+            3551.940228
+          ],
+          [
+            4700.275584,
+            -2406.463788,
+            3590.018601
+          ]
+        ]
+      },
+      "vertexCount": 509,
+      "triangleCount": 882,
+      "tokens": [
+        "PNRA",
+        "SJFZ",
+        "SBRN"
+      ]
+    },
+    {
+      "id": "pnra-sjfz-sjcv-san-jacinto-claremont-fault-east-cfm4",
+      "name": "San Jacinto Claremont fault east",
+      "region": "PNRA",
+      "system": "SJFZ",
+      "section": "SJCV",
+      "cfmVersion": "CFM4",
+      "declaredName": "PNRA-SJFZ-SJCV-San_Jacinto-Claremont_fault-east-CFM4",
+      "group": "cfm5-primary",
+      "source": "data/CFM/CFM5_release_2014/tsurf/CFM5_socal_primary/PNRA-SJFZ-SJCV-San_Jacinto-Claremont_fault-east-CFM4.ts",
+      "meshPath": "faults/cfm5-primary/faults/pnra-sjfz-sjcv-san-jacinto-claremont-fault-east-cfm4.json",
+      "color": "#6a5acd",
+      "bounds": {
+        "lat": [
+          33.920357,
+          33.985217
+        ],
+        "lon": [
+          -117.183453,
+          -117.10002
+        ],
+        "depthKm": [
+          -0.726906,
+          17.46174
+        ],
+        "xyz": [
+          [
+            4687.255652,
+            -2413.813697,
+            3545.922742
+          ],
+          [
+            4706.748109,
+            -2401.846994,
+            3561.775517
+          ]
+        ]
+      },
+      "vertexCount": 461,
+      "triangleCount": 798,
+      "tokens": [
+        "PNRA",
+        "SJFZ",
+        "SJCV"
+      ]
+    },
+    {
+      "id": "pnra-elsz-cymt-elsinore-fault-cfm4",
+      "name": "Elsinore fault",
+      "region": "PNRA",
+      "system": "ELSZ",
+      "section": "CYMT",
+      "cfmVersion": "CFM4",
+      "declaredName": "PNRA-ELSZ-CYMT-Elsinore_fault-CFM4",
+      "group": "cfm5-primary",
+      "source": "data/CFM/CFM5_release_2014/tsurf/CFM5_socal_primary/PNRA-ELSZ-CYMT-Elsinore_fault-CFM4.ts",
+      "meshPath": "faults/cfm5-primary/faults/pnra-elsz-cymt-elsinore-fault-cfm4.json",
+      "color": "#8a2be2",
+      "bounds": {
+        "lat": [
+          32.759626,
+          33.010274
+        ],
+        "lon": [
+          -116.36417,
+          -115.951026
+        ],
+        "depthKm": [
+          -1.143856,
+          14.776322
+        ],
+        "xyz": [
+          [
+            4776.84399,
+            -2373.50457,
+            3441.923852
+          ],
+          [
+            4817.574108,
+            -2340.778355,
+            3470.863394
+          ]
+        ]
+      },
+      "vertexCount": 193,
+      "triangleCount": 329,
+      "tokens": [
+        "PNRA",
+        "ELSZ",
+        "CYMT"
+      ]
+    },
+    {
+      "id": "pnra-elsz-juln-elsinore-fault-north-cfm4",
+      "name": "Elsinore fault north",
+      "region": "PNRA",
+      "system": "ELSZ",
+      "section": "JULN",
+      "cfmVersion": "CFM4",
+      "declaredName": "PNRA-ELSZ-JULN-Elsinore_fault-north-CFM4",
+      "group": "cfm5-primary",
+      "source": "data/CFM/CFM5_release_2014/tsurf/CFM5_socal_primary/PNRA-ELSZ-JULN-Elsinore_fault-north-CFM4.ts",
+      "meshPath": "faults/cfm5-primary/faults/pnra-elsz-juln-elsinore-fault-north-cfm4.json",
+      "color": "#ba55d3",
+      "bounds": {
+        "lat": [
+          33.208229,
+          33.356061
+        ],
+        "lon": [
+          -116.940787,
+          -116.716593
+        ],
+        "depthKm": [
+          -1.284375,
+          17.0
+        ],
+        "xyz": [
+          [
+            4731.821435,
+            -2412.478603,
+            3480.411539
+          ],
+          [
+            4762.929265,
+            -2390.49874,
+            3500.823566
+          ]
+        ]
+      },
+      "vertexCount": 181,
+      "triangleCount": 308,
+      "tokens": [
+        "PNRA",
+        "ELSZ",
+        "JULN"
+      ]
+    },
+    {
+      "id": "pnra-elsz-juln-elsinore-fault-south-cfm4",
+      "name": "Elsinore fault south",
+      "region": "PNRA",
+      "system": "ELSZ",
+      "section": "JULN",
+      "cfmVersion": "CFM4",
+      "declaredName": "PNRA-ELSZ-JULN-Elsinore_fault-south-CFM4",
+      "group": "cfm5-primary",
+      "source": "data/CFM/CFM5_release_2014/tsurf/CFM5_socal_primary/PNRA-ELSZ-JULN-Elsinore_fault-south-CFM4.ts",
+      "meshPath": "faults/cfm5-primary/faults/pnra-elsz-juln-elsinore-fault-south-cfm4.json",
+      "color": "#ba55d3",
+      "bounds": {
+        "lat": [
+          32.947516,
+          33.243447
+        ],
+        "lon": [
+          -116.783806,
+          -116.358034
+        ],
+        "depthKm": [
+          -1.293006,
+          17.004352
+        ],
+        "xyz": [
+          [
+            4744.827448,
+            -2400.971064,
+            3456.184336
+          ],
+          [
+            4791.476851,
+            -2367.793363,
+            3493.023392
+          ]
+        ]
+      },
+      "vertexCount": 409,
+      "triangleCount": 707,
+      "tokens": [
+        "PNRA",
+        "ELSZ",
+        "JULN"
+      ]
+    },
+    {
+      "id": "grfs-grfz-west-garlock-fault-cfm5",
+      "name": "Garlock fault",
+      "region": "GRFS",
+      "system": "GRFZ",
+      "section": "WEST",
+      "cfmVersion": "CFM5",
+      "declaredName": "GRFS-GRFZ-WEST-Garlock_fault-CFM5",
+      "group": "cfm5-primary",
+      "source": "data/CFM/CFM5_release_2014/tsurf/CFM5_socal_primary/GRFS-GRFZ-WEST-Garlock_fault-CFM5.ts",
+      "meshPath": "faults/cfm5-primary/faults/grfs-grfz-west-garlock-fault-cfm5.json",
+      "color": "#40e0d0",
+      "bounds": {
+        "lat": [
+          34.808229,
+          35.278608
+        ],
+        "lon": [
+          -118.900884,
+          -117.972814
+        ],
+        "depthKm": [
+          -1.84,
+          15.240712
+        ],
+        "xyz": [
+          [
+            4568.684129,
+            -2528.254998,
+            3628.152103
+          ],
+          [
+            4593.750347,
+            -2435.696816,
+            3679.836617
+          ]
+        ]
+      },
+      "vertexCount": 141,
+      "triangleCount": 238,
+      "tokens": [
+        "GRFS",
+        "GRFZ",
+        "WEST"
+      ]
+    },
+    {
+      "id": "grfs-grfz-east-garlock-fault-cfm5",
+      "name": "Garlock fault",
+      "region": "GRFS",
+      "system": "GRFZ",
+      "section": "EAST",
+      "cfmVersion": "CFM5",
+      "declaredName": "GRFS-GRFZ-EAST-Garlock_fault-CFM5",
+      "group": "cfm5-primary",
+      "source": "data/CFM/CFM5_release_2014/tsurf/CFM5_socal_primary/GRFS-GRFZ-EAST-Garlock_fault-CFM5.ts",
+      "meshPath": "faults/cfm5-primary/faults/grfs-grfz-east-garlock-fault-cfm5.json",
+      "color": "#40e0d0",
+      "bounds": {
+        "lat": [
+          35.246897,
+          35.606751
+        ],
+        "lon": [
+          -118.065259,
+          -116.392987
+        ],
+        "depthKm": [
+          -0.962,
+          12.50043
+        ],
+        "xyz": [
+          [
+            4581.99544,
+            -2448.144271,
+            3669.492721
+          ],
+          [
+            4641.177276,
+            -2299.795734,
+            3709.272319
+          ]
+        ]
+      },
+      "vertexCount": 189,
+      "triangleCount": 322,
+      "tokens": [
+        "GRFS",
+        "GRFZ",
+        "EAST"
+      ]
+    },
+    {
+      "id": "safs-safz-mult-san-andreas-fault-fuis-cfm3",
+      "name": "San Andreas fault FUIS",
+      "region": "SAFS",
+      "system": "SAFZ",
+      "section": "MULT",
+      "cfmVersion": "CFM3",
+      "declaredName": "SAFS-SAFZ-MULT-San_Andreas_fault-FUIS-CFM3",
+      "group": "cfm5-alt",
+      "source": "data/CFM/CFM5_release_2014/tsurf/CFM5_socal_alt/SAFS-SAFZ-MULT-San_Andreas_fault-FUIS-CFM3.ts",
+      "meshPath": "faults/cfm5-alt/faults/safs-safz-mult-san-andreas-fault-fuis-cfm3.json",
+      "color": "#0000cd",
+      "bounds": {
+        "lat": [
+          33.363245,
+          35.984635
+        ],
+        "lon": [
+          -120.556447,
+          -115.684507
+        ],
+        "depthKm": [
+          -2.067,
+          16.607676
+        ],
+        "xyz": [
+          [
+            4432.896067,
+            -2620.2509,
+            3502.101574
+          ],
+          [
+            4793.949207,
+            -2301.640717,
+            3743.674099
+          ]
+        ]
+      },
+      "vertexCount": 946,
+      "triangleCount": 1409,
+      "tokens": [
+        "SAFS",
+        "SAFZ",
+        "MULT"
+      ]
+    },
+    {
+      "id": "pnra-elsz-cymt-elsinore-fault-cfm1",
+      "name": "Elsinore fault",
+      "region": "PNRA",
+      "system": "ELSZ",
+      "section": "CYMT",
+      "cfmVersion": "CFM1",
+      "declaredName": "PNRA-ELSZ-CYMT-Elsinore_fault-CFM1",
+      "group": "cfm5-alt",
+      "source": "data/CFM/CFM5_release_2014/tsurf/CFM5_socal_alt/PNRA-ELSZ-CYMT-Elsinore_fault-CFM1.ts",
+      "meshPath": "faults/cfm5-alt/faults/pnra-elsz-cymt-elsinore-fault-cfm1.json",
+      "color": "#c8c8c8",
+      "bounds": {
+        "lat": [
+          32.785041,
+          32.991196
+        ],
+        "lon": [
+          -116.443683,
+          -116.032247
+        ],
+        "depthKm": [
+          -0.953,
+          15.856956
+        ],
+        "xyz": [
+          [
+            4773.57159,
+            -2380.323866,
+            3445.586384
+          ],
+          [
+            4813.257553,
+            -2346.210928,
+            3470.009136
+          ]
+        ]
+      },
+      "vertexCount": 214,
+      "triangleCount": 336,
+      "tokens": [
+        "PNRA",
+        "ELSZ",
+        "CYMT"
+      ]
+    }
+  ]
+}

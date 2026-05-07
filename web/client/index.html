@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SCEC-VDO Fault Viewer</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+  </head>
+  <body>
+    <div id="app" class="app-shell">
+      <aside class="sidebar" aria-label="Fault layers">
+        <header class="panel-header">
+          <div>
+            <p class="eyebrow">SCEC-VDO</p>
+            <h1>Fault Viewer</h1>
+          </div>
+          <button id="reset-camera" class="icon-button" type="button" title="Reset camera" aria-label="Reset camera">R</button>
+        </header>
+
+        <label class="search-field">
+          <span>Search</span>
+          <input id="fault-search" type="search" autocomplete="off" placeholder="fault name or code" />
+        </label>
+
+        <div class="control-row">
+          <label class="toggle-row">
+            <input id="show-grid" type="checkbox" checked />
+            <span>Grid</span>
+          </label>
+          <label class="toggle-row">
+            <input id="show-grid-labels" type="checkbox" />
+            <span>Labels</span>
+          </label>
+        </div>
+
+        <div class="control-row single">
+          <label class="toggle-row">
+            <input id="show-alt" type="checkbox" checked />
+            <span>Alt</span>
+          </label>
+        </div>
+
+        <section class="fault-list-section" aria-labelledby="fault-list-heading">
+          <div class="section-title">
+            <h2 id="fault-list-heading">Faults</h2>
+            <span id="fault-count">0</span>
+          </div>
+          <div id="fault-list" class="fault-list"></div>
+        </section>
+      </aside>
+
+      <main class="viewer-region">
+        <canvas id="viewer-canvas" aria-label="3D fault scene"></canvas>
+        <div id="grid-labels" class="grid-labels" aria-hidden="true"></div>
+        <div id="fault-labels" class="fault-labels" aria-hidden="true"></div>
+        <div id="focus-marker" class="focus-marker" aria-hidden="true"></div>
+        <button id="compass" class="compass" type="button" title="Reset to north-up view" aria-label="Reset to north-up view">
+          <div id="compass-rose" class="compass-rose">
+            <span class="compass-point compass-n">N</span>
+            <span class="compass-point compass-e">E</span>
+            <span class="compass-point compass-s">S</span>
+            <span class="compass-point compass-w">W</span>
+            <span class="compass-axis vertical"></span>
+            <span class="compass-axis horizontal"></span>
+          </div>
+        </button>
+        <div id="status-banner" class="status-banner" role="status">Loading CFM data</div>
+        <div class="bottom-bar">
+          <div id="scene-stats">No mesh loaded</div>
+          <div class="toolbar" aria-label="Viewer controls">
+            <div class="segmented" role="group" aria-label="Render mode">
+              <button class="segment active" type="button" data-mode="surface">Surface</button>
+              <button class="segment" type="button" data-mode="wire">Wire</button>
+            </div>
+            <label class="range-control">
+              <span>Opacity</span>
+              <input id="opacity" type="range" min="20" max="100" value="88" />
+            </label>
+          </div>
+        </div>
+      </main>
+
+      <aside class="inspector" aria-label="Selected fault details">
+        <header class="panel-header compact">
+          <div>
+            <p class="eyebrow">Selected</p>
+            <h2 id="selected-name">None</h2>
+          </div>
+        </header>
+        <dl id="fault-details" class="details-list">
+          <div>
+            <dt>Status</dt>
+            <dd>Pick a fault surface or row</dd>
+          </div>
+        </dl>
+      </aside>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

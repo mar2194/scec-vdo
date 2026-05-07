@@ -1,0 +1,5 @@
+[project]
+name = "scecvdo-convert"
+version = "0.1.0"
+description = "Local conversion tools for the SCEC-VDO web migration."
+requires-python = ">=3.9"
