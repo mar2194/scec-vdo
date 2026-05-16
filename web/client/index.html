@@ -8,17 +8,30 @@
   </head>
   <body>
     <div id="app" class="app-shell">
-      <aside class="sidebar" aria-label="Fault layers">
+      <div class="mobile-top-bar" aria-label="Mobile map controls">
+        <button id="mobile-layers-toggle" class="mobile-pill-button" type="button" aria-controls="layer-panel" aria-expanded="false">
+          Layers
+        </button>
+        <div class="mobile-title">
+          <span>SCEC-VDO</span>
+          <strong>Fault Viewer</strong>
+        </div>
+      </div>
+
+      <aside id="layer-panel" class="sidebar" aria-label="Fault layers">
         <header class="panel-header">
           <div>
             <p class="eyebrow">SCEC-VDO</p>
             <h1>Fault Viewer</h1>
           </div>
-          <button id="reset-camera" class="icon-button" type="button" title="Reset camera" aria-label="Reset camera">R</button>
+          <div class="panel-actions">
+            <button id="reset-camera" class="icon-button" type="button" title="Reset camera" aria-label="Reset camera">R</button>
+            <button id="mobile-layers-close" class="mobile-close-button" type="button" aria-label="Close layers">Close</button>
+          </div>
         </header>
 
         <div class="control-row">
-          <label class="toggle-row">
+          <label class="toggle-row" title="Terrain also enables 3D-draped boundaries, water, and roads where available.">
             <input id="show-terrain" type="checkbox" />
             <span>Terrain</span>
           </label>
@@ -37,40 +50,306 @@
 
         <section class="layer-group" aria-label="Boundary layers">
           <div class="layer-group-title">Boundaries</div>
-          <div class="boundary-grid water-grid">
+          <div class="boundary-grid layer-simple-grid">
             <label class="toggle-row">
-              <input id="show-political-boundaries" type="checkbox" />
-              <span>Counties</span>
+              <input id="show-state-boundary" type="checkbox" />
+              <span>State</span>
             </label>
             <label class="color-row">
               <span>Color</span>
-              <input id="county-color" type="color" value="#edde94" />
+              <input id="state-boundary-color" type="color" value="#f3f0e7" />
+            </label>
+          </div>
+
+          <div class="boundary-grid layer-options-grid">
+            <label class="toggle-row">
+              <input id="show-political-boundaries" type="checkbox" />
+              <span>Counties</span>
             </label>
             <label class="toggle-row">
               <input id="show-county-labels" type="checkbox" />
               <span>Labels</span>
             </label>
+            <label class="color-row">
+              <span>Color</span>
+              <input id="county-color" type="color" value="#edde94" />
+            </label>
           </div>
 
-          <div class="boundary-grid water-grid">
+          <div class="boundary-grid layer-options-grid">
             <label class="toggle-row">
               <input id="show-place-boundaries" type="checkbox" />
               <span>Places</span>
-            </label>
-            <label class="color-row">
-              <span>Color</span>
-              <input id="place-color" type="color" value="#75c2f5" />
             </label>
             <label class="toggle-row">
               <input id="show-place-labels" type="checkbox" />
               <span>Labels</span>
             </label>
+            <label class="color-row">
+              <span>Color</span>
+              <input id="place-color" type="color" value="#75c2f5" />
+            </label>
+          </div>
+
+          <div class="boundary-grid municipal-place-grid">
+            <label class="toggle-row" title="Limit the Places outline layer to polygons containing a municipality coordinate.">
+              <input id="show-municipal-place-boundaries" type="checkbox" />
+              <span>Municipal places</span>
+            </label>
+            <label class="toggle-row" title="Shade municipal place polygons.">
+              <input id="show-municipal-place-fill" type="checkbox" checked />
+              <span>Fill</span>
+            </label>
+            <label class="toggle-row" title="Color municipal place polygons and outlines by the selected population metric.">
+              <input id="color-places-by-population" type="checkbox" />
+              <span>Metric color</span>
+            </label>
+          </div>
+          <label class="geology-unit-control municipal-place-metric-control">
+            <span>Metric</span>
+            <select id="municipal-place-color-metric">
+              <option value="population">Population</option>
+              <option value="density">Population density</option>
+            </select>
+          </label>
+
+          <div class="boundary-grid layer-simple-grid">
+            <label class="toggle-row">
+              <input id="show-municipality-points" type="checkbox" />
+              <span>Municipalities</span>
+            </label>
+            <label class="color-row">
+              <span>Color</span>
+              <input id="municipality-color" type="color" value="#f7b267" />
+            </label>
+          </div>
+          <label class="road-threshold-control municipality-scale-control">
+            <span>Pop scale</span>
+            <input id="municipality-population-scale" type="range" min="0" max="220" value="100" />
+            <output id="municipality-population-scale-value" for="municipality-population-scale">100</output>
+          </label>
+        </section>
+
+        <section class="layer-group" aria-label="Census tract layers">
+          <div class="layer-group-title">Census</div>
+          <div class="boundary-grid layer-options-grid">
+            <label class="toggle-row" title="Show 2020 California census tract boundaries and thematic fill.">
+              <input id="show-census-tracts" type="checkbox" />
+              <span>Tracts</span>
+            </label>
+            <label class="toggle-row" title="Shade census tract polygons by the selected metric.">
+              <input id="show-census-tract-fill" type="checkbox" checked />
+              <span>Fill</span>
+            </label>
+            <label class="color-row">
+              <span>Line</span>
+              <input id="census-tract-line-color" type="color" value="#f2efe5" />
+            </label>
+          </div>
+          <label class="geology-unit-control">
+            <span>Color by</span>
+            <select id="census-tract-metric" disabled>
+              <option value="">Load census</option>
+            </select>
+          </label>
+          <label class="road-threshold-control census-opacity-control">
+            <span>Opacity</span>
+            <input id="census-tract-opacity" type="range" min="10" max="90" value="48" />
+            <output id="census-tract-opacity-value" for="census-tract-opacity">48</output>
+          </label>
+        </section>
+
+        <section class="layer-group" aria-label="Geology layers">
+          <div class="layer-group-title">Geology</div>
+          <div class="geology-layer-row">
+            <label class="toggle-row" title="Terrain makes geology conform to the 500 m DEM mesh.">
+              <input id="show-geology" type="checkbox" />
+              <span>Rock units</span>
+            </label>
+          </div>
+          <label class="road-threshold-control geology-opacity-control">
+            <span>Opacity</span>
+            <input id="geology-opacity" type="range" min="20" max="95" value="62" />
+            <output id="geology-opacity-value" for="geology-opacity">62</output>
+          </label>
+          <label class="geology-unit-control">
+            <span>Unit</span>
+            <select id="geology-unit-select" disabled>
+              <option value="">Load geology</option>
+            </select>
+          </label>
+          <label class="color-row geology-color-row">
+            <span>Unit color</span>
+            <input id="geology-unit-color" type="color" value="#d7b56d" disabled />
+          </label>
+        </section>
+
+        <section class="layer-group" aria-label="Energy layers">
+          <div class="layer-group-title">Energy</div>
+          <div class="boundary-grid layer-options-grid">
+            <label class="toggle-row" title="Show CalGEM oil and gas field administrative boundaries.">
+              <input id="show-oil-gas-fields" type="checkbox" />
+              <span>Oil/gas fields</span>
+            </label>
+            <label class="toggle-row" title="Shade oil and gas field polygons.">
+              <input id="show-oil-gas-field-fill" type="checkbox" checked />
+              <span>Fill</span>
+            </label>
+            <label class="color-row">
+              <span>Color</span>
+              <input id="oil-gas-field-color" type="color" value="#d08a38" />
+            </label>
+          </div>
+          <label class="road-threshold-control oil-gas-opacity-control">
+            <span>Opacity</span>
+            <input id="oil-gas-field-opacity" type="range" min="10" max="85" value="42" />
+            <output id="oil-gas-field-opacity-value" for="oil-gas-field-opacity">42</output>
+          </label>
+          <div class="boundary-grid layer-options-grid">
+            <label class="toggle-row" title="Show offshore oil lease polygon boundaries.">
+              <input id="show-offshore-oil-leases" type="checkbox" />
+              <span>Offshore leases</span>
+            </label>
+            <label class="toggle-row" title="Shade offshore oil lease polygons.">
+              <input id="show-offshore-oil-lease-fill" type="checkbox" checked />
+              <span>Fill</span>
+            </label>
+            <label class="color-row">
+              <span>Color</span>
+              <input id="offshore-oil-lease-color" type="color" value="#58d6c9" />
+            </label>
+          </div>
+          <label class="road-threshold-control offshore-oil-lease-opacity-control">
+            <span>Opacity</span>
+            <input id="offshore-oil-lease-opacity" type="range" min="10" max="85" value="34" />
+            <output id="offshore-oil-lease-opacity-value" for="offshore-oil-lease-opacity">34</output>
+          </label>
+          <div class="boundary-grid layer-simple-grid">
+            <label class="toggle-row" title="Show offshore oil platform locations.">
+              <input id="show-oil-platforms" type="checkbox" />
+              <span>Oil platforms</span>
+            </label>
+            <label class="color-row">
+              <span>Color</span>
+              <input id="oil-platform-color" type="color" value="#ffb15f" />
+            </label>
+          </div>
+          <label class="road-threshold-control oil-platform-scale-control">
+            <span>Platform scale</span>
+            <input id="oil-platform-scale" type="range" min="40" max="260" value="125" />
+            <output id="oil-platform-scale-value" for="oil-platform-scale">125</output>
+          </label>
+          <div class="boundary-grid layer-simple-grid">
+            <label class="toggle-row" title="Show active California power plants with positive latest reported capacity.">
+              <input id="show-power-plants" type="checkbox" />
+              <span>Power plants</span>
+            </label>
+            <label class="color-row">
+              <span>Color</span>
+              <input id="power-plant-color" type="color" value="#c9f05d" />
+            </label>
+          </div>
+          <label class="road-threshold-control power-plant-scale-control">
+            <span>Plant scale</span>
+            <input id="power-plant-scale" type="range" min="0" max="220" value="100" />
+            <output id="power-plant-scale-value" for="power-plant-scale">100</output>
+          </label>
+          <div class="boundary-grid layer-simple-grid">
+            <label class="toggle-row" title="Show California Energy Commission transmission line corridors.">
+              <input id="show-transmission-lines" type="checkbox" />
+              <span>Transmission lines</span>
+            </label>
+            <label class="color-row">
+              <span>Color</span>
+              <input id="transmission-line-color" type="color" value="#b8f071" />
+            </label>
+          </div>
+          <label class="road-threshold-control transmission-line-opacity-control">
+            <span>Line opacity</span>
+            <input id="transmission-line-opacity" type="range" min="20" max="100" value="86" />
+            <output id="transmission-line-opacity-value" for="transmission-line-opacity">86</output>
+          </label>
+        </section>
+
+        <section class="layer-group" aria-label="Hazard layers">
+          <div class="layer-group-title">Hazards</div>
+          <div class="boundary-grid layer-options-grid">
+            <label class="toggle-row" title="Show California-clipped NASA FIRMS active fire detections.">
+              <input id="show-active-fires" type="checkbox" />
+              <span>Active fires</span>
+            </label>
+            <label class="toggle-row" title="Shade the VIIRS pixel footprints for active fire detections.">
+              <input id="show-active-fire-footprints" type="checkbox" checked />
+              <span>Footprints</span>
+            </label>
+            <label class="color-row">
+              <span>Color</span>
+              <input id="active-fire-color" type="color" value="#ff5a3d" />
+            </label>
+          </div>
+          <label class="road-threshold-control active-fire-scale-control">
+            <span>Fire scale</span>
+            <input id="active-fire-scale" type="range" min="40" max="220" value="110" />
+            <output id="active-fire-scale-value" for="active-fire-scale">110</output>
+          </label>
+
+          <div class="boundary-grid layer-options-grid">
+            <label class="toggle-row" title="Show the source-resolution CGS tsunami hazard area boundary.">
+              <input id="show-tsunami-hazard" type="checkbox" />
+              <span>Tsunami area</span>
+            </label>
+            <label class="toggle-row" title="Fill the source CGS tsunami hazard area polygons.">
+              <input id="show-tsunami-hazard-shade" type="checkbox" checked />
+              <span>Shade</span>
+            </label>
+            <label class="color-row">
+              <span>Color</span>
+              <input id="tsunami-hazard-color" type="color" value="#f26d5b" />
+            </label>
+          </div>
+          <label class="road-threshold-control hazard-opacity-control">
+            <span>Shade opacity</span>
+            <input id="tsunami-hazard-opacity" type="range" min="5" max="80" value="42" />
+            <output id="tsunami-hazard-opacity-value" for="tsunami-hazard-opacity">42</output>
+          </label>
+        </section>
+
+        <section class="layer-group" aria-label="Healthcare facility layers">
+          <div class="layer-group-title">Healthcare</div>
+          <div class="boundary-grid layer-options-grid">
+            <label class="toggle-row">
+              <input id="show-healthcare-facilities" type="checkbox" />
+              <span>Facilities</span>
+            </label>
+            <label class="toggle-row">
+              <input id="show-healthcare-labels" type="checkbox" />
+              <span>Labels</span>
+            </label>
+            <label class="color-row">
+              <span>Color</span>
+              <input id="healthcare-color" type="color" value="#ff6b8a" />
+            </label>
+          </div>
+          <label class="road-threshold-control healthcare-scale-control">
+            <span>Bed scale</span>
+            <input id="healthcare-bed-scale" type="range" min="0" max="220" value="100" />
+            <output id="healthcare-bed-scale-value" for="healthcare-bed-scale">100</output>
+          </label>
+          <div class="healthcare-filter-grid" aria-label="Healthcare facility filters">
+            <label class="toggle-row"><input data-healthcare-category="trauma" type="checkbox" checked /><span>Trauma</span></label>
+            <label class="toggle-row"><input data-healthcare-category="critical-access" type="checkbox" checked /><span>Critical</span></label>
+            <label class="toggle-row"><input data-healthcare-category="general-acute" type="checkbox" checked /><span>Acute</span></label>
+            <label class="toggle-row"><input data-healthcare-category="psych-hospital" type="checkbox" checked /><span>Psych</span></label>
+            <label class="toggle-row"><input data-healthcare-category="skilled-nursing" type="checkbox" checked /><span>Nursing</span></label>
+            <label class="toggle-row"><input data-healthcare-category="dialysis" type="checkbox" checked /><span>Dialysis</span></label>
+            <label class="toggle-row"><input data-healthcare-category="intermediate-care" type="checkbox" checked /><span>ICF/DD</span></label>
+            <label class="toggle-row"><input data-healthcare-category="other" type="checkbox" checked /><span>Other</span></label>
           </div>
         </section>
 
         <section class="layer-group" aria-label="Water layers">
           <div class="layer-group-title">Water</div>
-          <div class="boundary-grid lake-grid">
+          <div class="boundary-grid layer-options-grid">
             <label class="toggle-row">
               <input id="show-lakes" type="checkbox" />
               <span>Lakes</span>
@@ -85,7 +364,7 @@
             </label>
           </div>
 
-          <div class="boundary-grid">
+          <div class="boundary-grid layer-simple-grid">
             <label class="toggle-row">
               <input id="show-rivers" type="checkbox" />
               <span>Rivers</span>
@@ -95,11 +374,22 @@
               <input id="river-color" type="color" value="#5bbff7" />
             </label>
           </div>
+
+          <div class="boundary-grid layer-simple-grid">
+            <label class="toggle-row">
+              <input id="show-shoreline" type="checkbox" />
+              <span>Shoreline</span>
+            </label>
+            <label class="color-row">
+              <span>Color</span>
+              <input id="shoreline-color" type="color" value="#9be7df" />
+            </label>
+          </div>
         </section>
 
         <section class="layer-group" aria-label="Road layers">
           <div class="layer-group-title">Roads</div>
-          <div class="boundary-grid water-grid">
+          <div class="boundary-grid layer-simple-grid">
             <label class="toggle-row">
               <input id="show-roads" type="checkbox" />
               <span>Highways</span>
@@ -109,6 +399,27 @@
               <input id="road-color" type="color" value="#f3d16b" />
             </label>
           </div>
+          <div class="boundary-grid layer-simple-grid">
+            <label class="toggle-row">
+              <input id="show-public-roads" type="checkbox" />
+              <span>All public roads</span>
+            </label>
+            <label class="color-row">
+              <span>Color</span>
+              <input id="public-road-color" type="color" value="#d9d3bd" />
+            </label>
+          </div>
+          <label class="road-threshold-control">
+            <span>All zoom</span>
+            <input id="public-road-zoom-threshold" type="range" min="10" max="100" value="55" />
+            <output id="public-road-zoom-value" for="public-road-zoom-threshold">55</output>
+          </label>
+          <label class="search-field road-search-field">
+            <span>Street</span>
+            <input id="public-road-search" type="search" autocomplete="off" placeholder="street name" />
+          </label>
+          <div id="public-road-status" class="layer-hint">0 selected</div>
+          <div id="public-road-results" class="road-results" aria-label="Public road search results"></div>
         </section>
 
         <div class="control-row">
@@ -145,6 +456,7 @@
         <div id="grid-labels" class="grid-labels" aria-hidden="true"></div>
         <div id="county-labels" class="county-labels" aria-hidden="true"></div>
         <div id="place-labels" class="place-labels" aria-hidden="true"></div>
+        <div id="healthcare-labels" class="healthcare-labels" aria-hidden="true"></div>
         <div id="fault-labels" class="fault-labels" aria-hidden="true"></div>
         <div id="focus-marker" class="focus-marker" aria-hidden="true"></div>
         <button id="compass" class="compass" type="button" title="Reset to north-up view" aria-label="Reset to north-up view">
@@ -157,10 +469,38 @@
             <span class="compass-axis horizontal"></span>
           </div>
         </button>
+        <button id="locate-user" class="locate-user" type="button" title="Use my location" aria-label="Use my location">
+          <span class="locate-user-dot" aria-hidden="true"></span>
+        </button>
         <div id="status-banner" class="status-banner" role="status">Loading CFM data</div>
-        <div class="bottom-bar">
+        <button id="mobile-tools-toggle" class="mobile-sheet-toggle" type="button" aria-controls="viewer-controls-sheet" aria-expanded="false">
+          Tools
+        </button>
+        <div id="viewer-controls-sheet" class="bottom-bar">
+          <div class="mobile-sheet-header">
+            <span>Viewer controls</span>
+            <button id="mobile-tools-close" class="mobile-close-button" type="button" aria-label="Close viewer controls">Close</button>
+          </div>
           <div id="scene-stats">No mesh loaded</div>
           <div class="toolbar" aria-label="Viewer controls">
+            <label class="select-control">
+              <span>Select</span>
+              <select id="selection-type">
+                <option value="fault">Fault</option>
+                <option value="healthcare">Healthcare</option>
+                <option value="lake">Lakes</option>
+                <option value="river">Rivers</option>
+                <option value="geology">Rock units</option>
+                <option value="oilgas">Oil/gas fields</option>
+                <option value="offshorelease">Offshore oil leases</option>
+                <option value="oilplatform">Oil platforms</option>
+                <option value="powerplant">Power plants</option>
+                <option value="transmission">Transmission lines</option>
+                <option value="municipality">Municipalities</option>
+                <option value="census">Census tracts</option>
+                <option value="fire">Active fires</option>
+              </select>
+            </label>
             <div class="segmented" role="group" aria-label="Render mode">
               <button class="segment active" type="button" data-mode="surface">Surface</button>
               <button class="segment" type="button" data-mode="wire">Wire</button>
@@ -186,6 +526,10 @@
           <div>
             <p class="eyebrow">Selected</p>
             <h2 id="selected-name">None</h2>
+          </div>
+          <div class="panel-actions">
+            <button id="inspector-collapse" class="icon-button inspector-collapse-button" type="button" title="Collapse details" aria-label="Collapse details">&gt;</button>
+            <button id="mobile-inspector-close" class="mobile-close-button" type="button" aria-label="Close details">Close</button>
           </div>
         </header>
         <dl id="fault-details" class="details-list">
